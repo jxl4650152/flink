@@ -160,6 +160,14 @@ public class ResourceManagerOptions {
 	 */
 	public static final String CONTAINERIZED_TASK_MANAGER_ENV_PREFIX = "containerized.taskmanager.env.";
 
+
+	public static final ConfigOption<String> CLOUD_ID = ConfigOptions
+		.key("cloud.id")
+		.stringType()
+		.defaultValue("cloud1")
+		.withDescription(Description.builder()
+			.text("The id of cloud of ResourceManager.")
+			.build());
 	// ---------------------------------------------------------------------------------------------
 
 	/** Not intended to be instantiated. */

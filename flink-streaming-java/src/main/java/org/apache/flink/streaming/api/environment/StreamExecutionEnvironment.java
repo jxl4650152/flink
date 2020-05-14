@@ -985,6 +985,13 @@ public class StreamExecutionEnvironment {
 		return addSource(function, "Collection Source", typeInfo);
 	}
 
+	public <OUT> DataStreamSource<OUT> fromCollection(Iterator<OUT> data, TypeInformation<OUT> typeInfo, String cloudId) {
+		Preconditions.checkNotNull(data, "The iterator must not be null");
+
+		SourceFunction<OUT> function = new FromIteratorFunction<>(data);
+		return addSource(function, "Collection Source", typeInfo, cloudId);
+	}
+
 	/**
 	 * Creates a new data stream that contains elements in the iterator. The iterator is splittable,
 	 * allowing the framework to create a parallel data stream source that returns the elements in
@@ -1511,6 +1518,10 @@ public class StreamExecutionEnvironment {
 		return addSource(function, "Custom Source");
 	}
 
+	public <OUT> DataStreamSource<OUT> addSource(SourceFunction<OUT> function, CloudInfo cloudInfo) {
+		return addSource(function, "Custom Source", null, cloudInfo.getCloudId());
+	}
+
 	/**
 	 * Adds a data source with a custom type information thus opening a
 	 * {@link DataStream}. Only in very special cases does the user need to
@@ -1586,6 +1597,13 @@ public class StreamExecutionEnvironment {
 		final StreamSource<OUT, ?> sourceOperator = new StreamSource<>(function);
 		return new DataStreamSource<>(this, typeInfo, sourceOperator, isParallel, sourceName);
 	}
+
+	public <OUT> DataStreamSource<OUT> addSource(SourceFunction<OUT> function, String sourceName, TypeInformation<OUT> typeInfo, String cloudId) {
+		DataStreamSource<OUT> dataStreamSource = addSource(function, sourceName,  typeInfo);
+		dataStreamSource.getTransformation().setCLoudId(cloudId);
+		return dataStreamSource;
+	}
+
 
 	/**
 	 * Triggers the program execution. The environment will execute all parts of

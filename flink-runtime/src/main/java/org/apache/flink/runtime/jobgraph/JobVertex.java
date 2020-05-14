@@ -117,6 +117,10 @@ public class JobVertex implements java.io.Serializable {
 	/** The input dependency constraint to schedule this vertex. */
 	private InputDependencyConstraint inputDependencyConstraint = InputDependencyConstraint.ANY;
 
+	private String cloudId;
+
+	private boolean isBorder;
+
 	// --------------------------------------------------------------------------------------------
 
 	/**
@@ -140,6 +144,8 @@ public class JobVertex implements java.io.Serializable {
 		// the id lists must have the same size
 		this.operatorIDs.add(OperatorID.fromJobVertexID(this.id));
 		this.operatorIdsAlternatives.add(null);
+		this.cloudId = "";
+		this.isBorder = false;
 	}
 
 	/**
@@ -158,6 +164,8 @@ public class JobVertex implements java.io.Serializable {
 		this.idAlternatives.addAll(alternativeIds);
 		this.operatorIDs.addAll(operatorIds);
 		this.operatorIdsAlternatives.addAll(alternativeOperatorIds);
+		this.cloudId = "";
+		this.isBorder = false;
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -575,5 +583,21 @@ public class JobVertex implements java.io.Serializable {
 	@Override
 	public String toString() {
 		return this.name + " (" + this.invokableClassName + ')';
+	}
+
+	public String getCloudId() {
+		return cloudId;
+	}
+
+	public void setCloudId(String cloudId) {
+		this.cloudId = cloudId;
+	}
+
+	public boolean isBorder() {
+		return isBorder;
+	}
+
+	public void setBorder(boolean border) {
+		isBorder = border;
 	}
 }

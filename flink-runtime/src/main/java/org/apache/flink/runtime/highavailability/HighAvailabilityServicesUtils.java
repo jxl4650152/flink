@@ -19,14 +19,11 @@
 package org.apache.flink.runtime.highavailability;
 
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.HighAvailabilityOptions;
-import org.apache.flink.configuration.IllegalConfigurationException;
-import org.apache.flink.configuration.JobManagerOptions;
-import org.apache.flink.configuration.RestOptions;
+import org.apache.flink.configuration.*;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.blob.BlobStoreService;
 import org.apache.flink.runtime.blob.BlobUtils;
+import org.apache.flink.runtime.cloudmanager.CloudManager;
 import org.apache.flink.runtime.dispatcher.Dispatcher;
 import org.apache.flink.runtime.highavailability.nonha.embedded.EmbeddedHaServices;
 import org.apache.flink.runtime.highavailability.nonha.standalone.StandaloneClientHAServices;
@@ -93,7 +90,7 @@ public class HighAvailabilityServicesUtils {
 		switch (highAvailabilityMode) {
 			case NONE:
 				final Tuple2<String, Integer> hostnamePort = getJobManagerAddress(configuration);
-
+				final Tuple2<String, Integer> chostnamePort = getCloudManagerAddress(configuration);
 				final String jobManagerRpcUrl = AkkaRpcServiceUtils.getRpcUrl(
 					hostnamePort.f0,
 					hostnamePort.f1,
@@ -115,12 +112,19 @@ public class HighAvailabilityServicesUtils {
 				final String webMonitorAddress = getWebMonitorAddress(
 					configuration,
 					addressResolution);
+				final String cloudManagerRpcUrl = AkkaRpcServiceUtils.getRpcUrl(
+					chostnamePort.f0,
+					chostnamePort.f1,
+					CloudManager.CLOUD_MANAGER_NAME,
+					addressResolution,
+					configuration);
 
 				return new StandaloneHaServices(
 					resourceManagerRpcUrl,
 					dispatcherRpcUrl,
 					jobManagerRpcUrl,
-					webMonitorAddress);
+					webMonitorAddress,
+					cloudManagerRpcUrl);
 			case ZOOKEEPER:
 				BlobStoreService blobStoreService = BlobUtils.createBlobStoreFromConfig(configuration);
 
@@ -175,6 +179,33 @@ public class HighAvailabilityServicesUtils {
 
 		if (port <= 0 || port >= 65536) {
 			throw new ConfigurationException("Invalid value for '" + JobManagerOptions.PORT +
+				"' (port of the JobManager actor system) : " + port +
+				".  it must be greater than 0 and less than 65536.");
+		}
+
+		return Tuple2.of(hostname, port);
+	}
+
+	/**
+	 * Returns the JobManager's hostname and port extracted from the given
+	 * {@link Configuration}.
+	 *
+	 * @param configuration Configuration to extract the JobManager's address from
+	 * @return The JobManager's hostname and port
+	 * @throws ConfigurationException if the JobManager's address cannot be extracted from the configuration
+	 */
+	public static Tuple2<String, Integer> getCloudManagerAddress(Configuration configuration) throws ConfigurationException {
+
+		final String hostname = configuration.getString(CloudManagerOptions.ADDRESS);
+		final int port = configuration.getInteger(CloudManagerOptions.PORT);
+
+		if (hostname == null) {
+			throw new ConfigurationException("Config parameter '" + CloudManagerOptions.ADDRESS +
+				"' is missing (hostname/address of JobManager to connect to).");
+		}
+
+		if (port <= 0 || port >= 65536) {
+			throw new ConfigurationException("Invalid value for '" + CloudManagerOptions.PORT +
 				"' (port of the JobManager actor system) : " + port +
 				".  it must be greater than 0 and less than 65536.");
 		}

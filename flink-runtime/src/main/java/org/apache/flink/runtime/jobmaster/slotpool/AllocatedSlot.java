@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.jobmaster.slotpool;
 
+import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
@@ -60,6 +61,8 @@ class AllocatedSlot implements PhysicalSlot {
 
 	private final AtomicReference<Payload> payloadReference;
 
+	private CloudManagerGateway cloudManagerGateway;
+
 	// ------------------------------------------------------------------------
 
 	public AllocatedSlot(
@@ -73,7 +76,7 @@ class AllocatedSlot implements PhysicalSlot {
 		this.physicalSlotNumber = physicalSlotNumber;
 		this.resourceProfile = checkNotNull(resourceProfile);
 		this.taskManagerGateway = checkNotNull(taskManagerGateway);
-
+		this.cloudManagerGateway = null;
 		payloadReference = new AtomicReference<>(null);
 	}
 
@@ -172,5 +175,13 @@ class AllocatedSlot implements PhysicalSlot {
 	@Override
 	public String toString() {
 		return "AllocatedSlot " + allocationId + " @ " + taskManagerLocation + " - " + physicalSlotNumber;
+	}
+
+	public CloudManagerGateway getCloudManagerGateway() {
+		return cloudManagerGateway;
+	}
+
+	public void setCloudManagerGateway(CloudManagerGateway cloudManagerGateway) {
+		this.cloudManagerGateway = cloudManagerGateway;
 	}
 }

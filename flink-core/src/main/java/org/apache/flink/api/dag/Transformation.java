@@ -163,6 +163,12 @@ public abstract class Transformation<T> {
 	@Nullable
 	private String coLocationGroupKey;
 
+	@Nullable
+	private String cloudId;
+
+	@Nullable
+	private boolean isBorder;
+
 	/**
 	 * Creates a new {@code Transformation} with the given name, output type and parallelism.
 	 *
@@ -176,6 +182,8 @@ public abstract class Transformation<T> {
 		this.outputType = outputType;
 		this.parallelism = parallelism;
 		this.slotSharingGroup = null;
+		this.cloudId = "";
+		this.isBorder = false;
 	}
 
 	/**
@@ -479,6 +487,14 @@ public abstract class Transformation<T> {
 		return bufferTimeout;
 	}
 
+	public void setCLoudId(String id) {
+		this.cloudId = id;
+	}
+
+	public String getCLoudId() {
+		return this.cloudId;
+	}
+
 	/**
 	 * Returns all transitive predecessor {@code Transformation}s of this {@code Transformation}. This
 	 * is, for example, used when determining whether a feedback edge of an iteration
@@ -532,5 +548,13 @@ public abstract class Transformation<T> {
 		result = 31 * result + parallelism;
 		result = 31 * result + (int) (bufferTimeout ^ (bufferTimeout >>> 32));
 		return result;
+	}
+
+	public boolean isBorder() {
+		return isBorder;
+	}
+
+	public void setBorder(boolean border) {
+		isBorder = border;
 	}
 }

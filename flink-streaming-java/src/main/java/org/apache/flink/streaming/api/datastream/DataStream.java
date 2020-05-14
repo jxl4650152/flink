@@ -48,6 +48,7 @@ import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
+import org.apache.flink.streaming.api.environment.CloudInfo;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
@@ -637,6 +638,15 @@ public class DataStream<T> {
 		return flatMap(flatMapper, outType);
 	}
 
+	public <R> SingleOutputStreamOperator<R> flatMap(FlatMapFunction<T, R> flatMapper, CloudInfo cloudInfo) {
+
+		TypeInformation<R> outType = TypeExtractor.getFlatMapReturnTypes(clean(flatMapper),
+			getType(), Utils.getCallLocationName(), true);
+		SingleOutputStreamOperator<R> singleOutputStreamOperator = flatMap(flatMapper, outType);
+		singleOutputStreamOperator.getTransformation().setCLoudId(cloudInfo.getCloudId());
+		return singleOutputStreamOperator;
+	}
+
 	/**
 	 * Applies a FlatMap transformation on a {@link DataStream}. The
 	 * transformation calls a {@link FlatMapFunction} for each element of the
@@ -1003,6 +1013,12 @@ public class DataStream<T> {
 		return addSink(printFunction).name("Print to Std. Out");
 	}
 
+	@PublicEvolving
+	public DataStreamSink<T> print(String cloudId) {
+		PrintSinkFunction<T> printFunction = new PrintSinkFunction<>();
+		return addSink(printFunction).name("Print to Std. Out");
+	}
+
 	/**
 	 * Writes a DataStream to the standard output stream (stderr).
 	 *
@@ -1030,11 +1046,11 @@ public class DataStream<T> {
 	 * @param sinkIdentifier The string to prefix the output with.
 	 * @return The closed DataStream.
 	 */
-	@PublicEvolving
-	public DataStreamSink<T> print(String sinkIdentifier) {
-		PrintSinkFunction<T> printFunction = new PrintSinkFunction<>(sinkIdentifier, false);
-		return addSink(printFunction).name("Print to Std. Out");
-	}
+//	@PublicEvolving
+//	public DataStreamSink<T> print(String sinkIdentifier) {
+//		PrintSinkFunction<T> printFunction = new PrintSinkFunction<>(sinkIdentifier, false);
+//		return addSink(printFunction).name("Print to Std. Out");
+//	}
 
 	/**
 	 * Writes a DataStream to the standard output stream (stderr).

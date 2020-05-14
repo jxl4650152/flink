@@ -86,7 +86,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * eliminate ambiguities.
  *
  * <p>TODO : Make pending requests location preference aware
- * TODO : Make pass location preferences to ResourceManager when sending a slot request
+ * TODO : pass location preferences to ResourceManager when sending a slot request
  */
 public class SlotPoolImpl implements SlotPool {
 
@@ -647,6 +647,7 @@ public class SlotPoolImpl implements SlotPool {
 			slotOffer.getSlotIndex(),
 			slotOffer.getResourceProfile(),
 			taskManagerGateway);
+
 
 		// check whether we have request waiting for this slot
 		PendingRequest pendingRequest = pendingRequests.removeKeyB(allocationID);

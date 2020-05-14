@@ -106,6 +106,13 @@ public class ResourceProfile implements Serializable {
 	@Nullable // can be null only for UNKNOWN
 	private final MemorySize networkMemory;
 
+	/** Cloud id. */
+	@Nullable
+	private  String cloudId;
+
+	/** border node? */
+	private boolean isBorder;
+
 	/** A extensible field for user specified resources from {@link ResourceSpec}. */
 	private final Map<String, Resource> extendedResources = new HashMap<>(1);
 
@@ -127,7 +134,8 @@ public class ResourceProfile implements Serializable {
 			final MemorySize taskOffHeapMemory,
 			final MemorySize managedMemory,
 			final MemorySize networkMemory,
-			final Map<String, Resource> extendedResources) {
+			final Map<String, Resource> extendedResources,
+			final String cloudId) {
 
 		checkNotNull(cpuCores);
 		checkArgument(cpuCores instanceof CPUResource, "cpuCores must be CPUResource");
@@ -137,6 +145,7 @@ public class ResourceProfile implements Serializable {
 		this.taskOffHeapMemory = checkNotNull(taskOffHeapMemory);
 		this.managedMemory = checkNotNull(managedMemory);
 		this.networkMemory = checkNotNull(networkMemory);
+		this.cloudId = cloudId;
 		if (extendedResources != null) {
 			this.extendedResources.putAll(extendedResources);
 		}
@@ -151,6 +160,7 @@ public class ResourceProfile implements Serializable {
 		this.taskOffHeapMemory = null;
 		this.managedMemory = null;
 		this.networkMemory = null;
+		this.cloudId = null;
 	}
 
 	// ------------------------------------------------------------------------
@@ -163,6 +173,14 @@ public class ResourceProfile implements Serializable {
 	public Resource getCpuCores() {
 		throwUnsupportedOperationExecptionIfUnknown();
 		return cpuCores;
+	}
+
+	public void setCloudId(String id){
+		this.cloudId = id;
+	}
+
+	public void setBorder(boolean isBorder){
+		this.isBorder = isBorder;
 	}
 
 	/**
@@ -203,6 +221,10 @@ public class ResourceProfile implements Serializable {
 	public MemorySize getNetworkMemory() {
 		throwUnsupportedOperationExecptionIfUnknown();
 		return networkMemory;
+	}
+
+	public String getCloudId(){
+		return this.cloudId;
 	}
 
 	/**
@@ -293,6 +315,8 @@ public class ResourceProfile implements Serializable {
 		result = 31 * result + Objects.hashCode(managedMemory);
 		result = 31 * result + Objects.hashCode(networkMemory);
 		result = 31 * result + extendedResources.hashCode();
+		assert cloudId != null;
+		result = 31 * result + cloudId.hashCode();
 		return result;
 	}
 
@@ -307,7 +331,8 @@ public class ResourceProfile implements Serializable {
 				Objects.equals(taskOffHeapMemory, that.taskOffHeapMemory) &&
 				Objects.equals(managedMemory, that.managedMemory) &&
 				Objects.equals(networkMemory, that.networkMemory) &&
-				Objects.equals(extendedResources, that.extendedResources);
+				Objects.equals(extendedResources, that.extendedResources) &&
+				cloudId.equals(that.cloudId);
 		}
 		return false;
 	}
@@ -343,7 +368,8 @@ public class ResourceProfile implements Serializable {
 			taskOffHeapMemory.add(other.taskOffHeapMemory),
 			managedMemory.add(other.managedMemory),
 			networkMemory.add(other.networkMemory),
-			resultExtendedResource);
+			resultExtendedResource,
+			this.cloudId);
 	}
 
 	/**
@@ -380,7 +406,8 @@ public class ResourceProfile implements Serializable {
 			taskOffHeapMemory.subtract(other.taskOffHeapMemory),
 			managedMemory.subtract(other.managedMemory),
 			networkMemory.subtract(other.networkMemory),
-			resultExtendedResource
+			resultExtendedResource,
+			this.cloudId
 		);
 	}
 
@@ -408,6 +435,7 @@ public class ResourceProfile implements Serializable {
 		resourceStr = addMemorySizeString(resourceStr, "taskOffHeapMemory", taskOffHeapMemory);
 		resourceStr = addMemorySizeString(resourceStr, "managedMemory", managedMemory);
 		resourceStr = addMemorySizeString(resourceStr, "networkMemory", networkMemory);
+		resourceStr += (", cloudId=" + cloudId);
 		return resourceStr;
 	}
 
@@ -483,7 +511,8 @@ public class ResourceProfile implements Serializable {
 		private MemorySize managedMemory = MemorySize.ZERO;
 		private MemorySize networkMemory = MemorySize.ZERO;
 		private Map<String, Resource> extendedResources = new HashMap<>();
-
+		private String cloudId = "";
+		private boolean isBorder = false;
 		private Builder() {
 		}
 
@@ -537,6 +566,16 @@ public class ResourceProfile implements Serializable {
 			return this;
 		}
 
+		public Builder setCloudId(String cloudId) {
+			this.cloudId = cloudId;
+			return this;
+		}
+
+		public Builder setBorder(boolean isBorder) {
+			this.isBorder = isBorder;
+			return this;
+		}
+
 		public Builder addExtendedResource(String name, Resource extendedResource) {
 			this.extendedResources.put(name, extendedResource);
 			return this;
@@ -556,7 +595,8 @@ public class ResourceProfile implements Serializable {
 				taskOffHeapMemory,
 				managedMemory,
 				networkMemory,
-				extendedResources);
+				extendedResources,
+				cloudId);
 		}
 	}
 }

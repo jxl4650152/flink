@@ -109,6 +109,12 @@ public class ConfigurationUtils {
 		return timeout;
 	}
 
+	public static String getCloudId(Configuration configuration) {
+		final String cid;
+		cid = configuration.getString(ResourceManagerOptions.CLOUD_ID);
+		return cid;
+	}
+
 	/**
 	 * Creates a new {@link Configuration} from the given {@link Properties}.
 	 *

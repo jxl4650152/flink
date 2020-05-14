@@ -21,12 +21,15 @@ package org.apache.flink.runtime.resourcemanager.slotmanager;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
+import org.apache.flink.runtime.cloudmanager.CloudManagerToResourceManagerConnection;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
 import org.apache.flink.runtime.clusterframework.types.SlotID;
 import org.apache.flink.runtime.concurrent.ScheduledExecutor;
 import org.apache.flink.runtime.instance.InstanceID;
 import org.apache.flink.runtime.messages.Acknowledge;
+import org.apache.flink.runtime.resourcemanager.CloudManagerRegistration;
 import org.apache.flink.runtime.resourcemanager.ResourceManagerId;
 import org.apache.flink.runtime.resourcemanager.SlotRequest;
 import org.apache.flink.runtime.resourcemanager.exceptions.ResourceManagerException;
@@ -99,7 +102,11 @@ public class SlotManagerImpl implements SlotManager {
 
 	private final SlotMatchingStrategy slotMatchingStrategy;
 
-	/** ResourceManager's id. */
+	private final HashMap<String, CloudManagerToResourceManagerConnection> cloudManagerRegistrations;
+
+	/**
+	 * ResourceManager's id.
+	 */
 	private ResourceManagerId resourceManagerId;
 
 	/** Executor for future callbacks which have to be "synchronized". */
@@ -143,6 +150,7 @@ public class SlotManagerImpl implements SlotManager {
 		slots = new HashMap<>(16);
 		freeSlots = new LinkedHashMap<>(16);
 		taskManagerRegistrations = new HashMap<>(4);
+		cloudManagerRegistrations = new HashMap<>(4);
 		fulfilledSlotRequests = new HashMap<>(16);
 		pendingSlotRequests = new HashMap<>(16);
 		pendingSlots = new HashMap<>(16);
@@ -390,6 +398,11 @@ public class SlotManagerImpl implements SlotManager {
 			}
 		}
 
+	}
+
+	@Override
+	public void registerCloudManager(CloudManagerToResourceManagerConnection cloudManagerConnection) {
+		cloudManagerRegistrations.put(cloudManagerConnection.getCloudId(), cloudManagerConnection);
 	}
 
 	@Override
@@ -829,6 +842,8 @@ public class SlotManagerImpl implements SlotManager {
 
 		TaskExecutorConnection taskExecutorConnection = taskManagerSlot.getTaskManagerConnection();
 		TaskExecutorGateway gateway = taskExecutorConnection.getTaskExecutorGateway();
+		CloudManagerToResourceManagerConnection cloudManagerConnection = cloudManagerRegistrations.get(pendingSlotRequest.getResourceProfile().getCloudId());
+		CloudManagerGateway cGateway = (CloudManagerGateway) cloudManagerConnection.getTargetGateway();
 
 		final CompletableFuture<Acknowledge> completableFuture = new CompletableFuture<>();
 		final AllocationID allocationId = pendingSlotRequest.getAllocationId();

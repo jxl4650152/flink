@@ -193,7 +193,7 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		}
 
 		this.parallelism = numTaskVertices;
-		this.resourceProfile = ResourceProfile.fromResourceSpec(jobVertex.getMinResources(), MemorySize.ZERO);
+		this.resourceProfile = createResourceProfile(jobVertex);
 
 		this.taskVertices = new ExecutionVertex[numTaskVertices];
 		this.operatorIDs = Collections.unmodifiableList(jobVertex.getOperatorIDs());
@@ -270,6 +270,13 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		catch (Throwable t) {
 			throw new JobException("Creating the input splits caused an error: " + t.getMessage(), t);
 		}
+	}
+
+	private ResourceProfile createResourceProfile(JobVertex jobVertex) {
+		ResourceProfile res = ResourceProfile.fromResourceSpec(jobVertex.getMinResources(), MemorySize.ZERO);
+		res.setBorder(jobVertex.isBorder());
+		res.setCloudId(jobVertex.getCloudId());
+		return res;
 	}
 
 	/**

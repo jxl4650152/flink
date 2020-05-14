@@ -72,6 +72,8 @@ public interface HighAvailabilityServices extends ClientHighAvailabilityServices
 	 */
 	LeaderRetrievalService getResourceManagerLeaderRetriever();
 
+	LeaderRetrievalService getCloudManagerLeaderRetriever();
+
 	/**
 	 * Gets the leader retriever for the dispatcher. This leader retrieval service
 	 * is not always accessible.
@@ -122,6 +124,8 @@ public interface HighAvailabilityServices extends ClientHighAvailabilityServices
 	 * @return Leader election service for the resource manager leader election
 	 */
 	LeaderElectionService getResourceManagerLeaderElectionService();
+
+
 
 	/**
 	 * Gets the leader election service for the cluster's dispatcher.

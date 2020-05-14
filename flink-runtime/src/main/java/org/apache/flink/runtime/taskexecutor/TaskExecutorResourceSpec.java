@@ -35,17 +35,25 @@ public class TaskExecutorResourceSpec {
 
 	private final MemorySize managedMemorySize;
 
+	private final String cloudId;
+
+	private final boolean isBorder;
+
 	public TaskExecutorResourceSpec(
 			CPUResource cpuCores,
 			MemorySize taskHeapSize,
 			MemorySize taskOffHeapSize,
 			MemorySize networkMemSize,
-			MemorySize managedMemorySize) {
+			MemorySize managedMemorySize,
+			String cloudId,
+			boolean isBorder) {
 		this.cpuCores = cpuCores;
 		this.taskHeapSize = taskHeapSize;
 		this.taskOffHeapSize = taskOffHeapSize;
 		this.networkMemSize = networkMemSize;
 		this.managedMemorySize = managedMemorySize;
+		this.cloudId = cloudId;
+		this.isBorder = isBorder;
 	}
 
 	public CPUResource getCpuCores() {
@@ -66,5 +74,13 @@ public class TaskExecutorResourceSpec {
 
 	public MemorySize getManagedMemorySize() {
 		return managedMemorySize;
+	}
+
+	public String getCloudId() {
+		return cloudId;
+	}
+
+	public boolean isBorder() {
+		return isBorder;
 	}
 }

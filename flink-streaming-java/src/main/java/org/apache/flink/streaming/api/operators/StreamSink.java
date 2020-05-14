@@ -43,6 +43,7 @@ public class StreamSink<IN> extends AbstractUdfStreamOperator<Object, SinkFuncti
 		chainingStrategy = ChainingStrategy.ALWAYS;
 	}
 
+
 	@Override
 	public void open() throws Exception {
 		super.open();

@@ -580,7 +580,9 @@ public class StreamGraphGenerator {
 				source.getOperatorFactory(),
 				null,
 				source.getOutputType(),
-				"Source: " + source.getName());
+				"Source: " + source.getName(),
+				source.getCLoudId(),
+				source.isBorder());
 		if (source.getOperatorFactory() instanceof InputFormatOperatorFactory) {
 			streamGraph.setInputFormat(source.getId(),
 					((InputFormatOperatorFactory<T>) source.getOperatorFactory()).getInputFormat());
@@ -599,6 +601,19 @@ public class StreamGraphGenerator {
 
 		Collection<Integer> inputIds = transform(sink.getInput());
 
+		String inputCloudId = sink.getInput().getCLoudId();
+		if(inputCloudId.equals("")){
+			LOG.error("Input({}) of transformation({}) doesn't have cloudId after being transformed.",
+				sink.getInput().getName(),
+				sink.getName());
+		} else {
+			if (sink.getCLoudId().equals("")){
+				sink.setCLoudId(inputCloudId);
+			}else if (sink.getCLoudId().equals(inputCloudId)){
+				sink.getInput().setBorder(true);
+				sink.setBorder(true);
+			}
+		}
 		String slotSharingGroup = determineSlotSharingGroup(sink.getSlotSharingGroup(), inputIds);
 
 		streamGraph.addSink(sink.getId(),
@@ -607,7 +622,9 @@ public class StreamGraphGenerator {
 				sink.getOperatorFactory(),
 				sink.getInput().getOutputType(),
 				null,
-				"Sink: " + sink.getName());
+				"Sink: " + sink.getName(),
+				sink.getCLoudId(),
+				sink.isBorder());
 
 		StreamOperatorFactory operatorFactory = sink.getOperatorFactory();
 		if (operatorFactory instanceof OutputFormatOperatorFactory) {
@@ -643,7 +660,19 @@ public class StreamGraphGenerator {
 	private <IN, OUT> Collection<Integer> transformOneInputTransform(OneInputTransformation<IN, OUT> transform) {
 
 		Collection<Integer> inputIds = transform(transform.getInput());
-
+		String inputCloudId = transform.getInput().getCLoudId();
+		if(inputCloudId.equals("")){
+			LOG.error("Input({}) of transformation({}) doesn't have cloudId after being transformed.",
+				transform.getInput().getName(),
+				transform.getName());
+		} else {
+			if (transform.getCLoudId().equals("")){
+				transform.setCLoudId(inputCloudId);
+			}else if (transform.getCLoudId().equals(inputCloudId)){
+				transform.getInput().setBorder(true);
+				transform.setBorder(true);
+			}
+		}
 		// the recursive call might have already transformed this
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
@@ -657,7 +686,9 @@ public class StreamGraphGenerator {
 				transform.getOperatorFactory(),
 				transform.getInputType(),
 				transform.getOutputType(),
-				transform.getName());
+				transform.getName(),
+				transform.getCLoudId(),
+				transform.isBorder());
 
 		if (transform.getStateKeySelector() != null) {
 			TypeSerializer<?> keySerializer = transform.getStateKeyType().createSerializer(executionConfig);

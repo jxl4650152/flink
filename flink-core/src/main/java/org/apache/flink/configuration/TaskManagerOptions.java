@@ -93,6 +93,20 @@ public class TaskManagerOptions {
 				" shuts down the actor system if it detects that it has quarantined another actor system" +
 				" or if it has been quarantined by another actor system.");
 
+
+	public static final ConfigOption<String> TASK_MANAGER_CLOUD_ID =
+		key("cloud.id")
+			.stringType()
+			.defaultValue("cloud1")
+			.withDescription("cloud id of this taskmanager");
+
+	public static final ConfigOption<Boolean> IS_BORDER =
+		key("is.border")
+			.booleanType()
+			.defaultValue(false)
+			.withDescription("is this taskmanager on border");
+
+
 	/**
 	 * The config parameter defining the task manager's hostname.
 	 * Overrides {@link #HOST_BIND_POLICY} automatic address binding.

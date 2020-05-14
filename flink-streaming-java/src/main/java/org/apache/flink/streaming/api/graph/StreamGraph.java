@@ -255,6 +255,19 @@ public class StreamGraph implements Pipeline {
 		sources.add(vertexID);
 	}
 
+	public <IN, OUT> void addSource(Integer vertexID,
+									@Nullable String slotSharingGroup,
+									@Nullable String coLocationGroup,
+									StreamOperatorFactory<OUT> operatorFactory,
+									TypeInformation<IN> inTypeInfo,
+									TypeInformation<OUT> outTypeInfo,
+									String operatorName,
+									String cloudId,
+									boolean isBorder) {
+		addOperator(vertexID, slotSharingGroup, coLocationGroup, operatorFactory, inTypeInfo, outTypeInfo, operatorName, cloudId, isBorder);
+		sources.add(vertexID);
+	}
+
 	public <IN, OUT> void addSink(Integer vertexID,
 		@Nullable String slotSharingGroup,
 		@Nullable String coLocationGroup,
@@ -263,6 +276,19 @@ public class StreamGraph implements Pipeline {
 		TypeInformation<OUT> outTypeInfo,
 		String operatorName) {
 		addOperator(vertexID, slotSharingGroup, coLocationGroup, operatorFactory, inTypeInfo, outTypeInfo, operatorName);
+		sinks.add(vertexID);
+	}
+
+	public <IN, OUT> void addSink(Integer vertexID,
+								  @Nullable String slotSharingGroup,
+								  @Nullable String coLocationGroup,
+								  StreamOperatorFactory<OUT> operatorFactory,
+								  TypeInformation<IN> inTypeInfo,
+								  TypeInformation<OUT> outTypeInfo,
+								  String operatorName,
+								  String cloudId,
+								  boolean isBorder) {
+		addOperator(vertexID, slotSharingGroup, coLocationGroup, operatorFactory, inTypeInfo, outTypeInfo, operatorName, cloudId, isBorder);
 		sinks.add(vertexID);
 	}
 
@@ -275,10 +301,11 @@ public class StreamGraph implements Pipeline {
 			TypeInformation<OUT> outTypeInfo,
 			String operatorName) {
 
+		StreamNode newNode;
 		if (operatorFactory.isStreamSource()) {
-			addNode(vertexID, slotSharingGroup, coLocationGroup, SourceStreamTask.class, operatorFactory, operatorName);
+			newNode = addNode(vertexID, slotSharingGroup, coLocationGroup, SourceStreamTask.class, operatorFactory, operatorName);
 		} else {
-			addNode(vertexID, slotSharingGroup, coLocationGroup, OneInputStreamTask.class, operatorFactory, operatorName);
+			newNode = addNode(vertexID, slotSharingGroup, coLocationGroup, OneInputStreamTask.class, operatorFactory, operatorName);
 		}
 
 		TypeSerializer<IN> inSerializer = inTypeInfo != null && !(inTypeInfo instanceof MissingTypeInfo) ? inTypeInfo.createSerializer(executionConfig) : null;
@@ -297,8 +324,48 @@ public class StreamGraph implements Pipeline {
 		}
 
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("Vertex: {}", vertexID);
+			LOG.debug("Add Vertex: {} name {}", vertexID, operatorName);
 		}
+	}
+
+	public <IN, OUT> void addOperator(
+		Integer vertexID,
+		@Nullable String slotSharingGroup,
+		@Nullable String coLocationGroup,
+		StreamOperatorFactory<OUT> operatorFactory,
+		TypeInformation<IN> inTypeInfo,
+		TypeInformation<OUT> outTypeInfo,
+		String operatorName,
+		String cloudId,
+		boolean isBorder) {
+
+		StreamNode newNode;
+		if (operatorFactory.isStreamSource()) {
+			newNode = addNode(vertexID, slotSharingGroup, coLocationGroup, SourceStreamTask.class, operatorFactory, operatorName);
+		} else {
+			newNode = addNode(vertexID, slotSharingGroup, coLocationGroup, OneInputStreamTask.class, operatorFactory, operatorName);
+		}
+
+		TypeSerializer<IN> inSerializer = inTypeInfo != null && !(inTypeInfo instanceof MissingTypeInfo) ? inTypeInfo.createSerializer(executionConfig) : null;
+
+		TypeSerializer<OUT> outSerializer = outTypeInfo != null && !(outTypeInfo instanceof MissingTypeInfo) ? outTypeInfo.createSerializer(executionConfig) : null;
+
+		setSerializers(vertexID, inSerializer, null, outSerializer);
+
+		if (operatorFactory.isOutputTypeConfigurable() && outTypeInfo != null) {
+			// sets the output type which must be know at StreamGraph creation time
+			operatorFactory.setOutputType(outTypeInfo, executionConfig);
+		}
+
+		if (operatorFactory.isInputTypeConfigurable()) {
+			operatorFactory.setInputType(inTypeInfo, executionConfig);
+		}
+
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Add Vertex: {} name {}", vertexID, operatorName);
+		}
+		newNode.setCloudId(cloudId);
+		newNode.setBorder(isBorder);
 	}
 
 	public <IN1, IN2, OUT> void addCoOperator(

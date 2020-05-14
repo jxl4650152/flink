@@ -29,6 +29,7 @@ import org.apache.flink.runtime.taskmanager.TaskExecutionState;
  * (e.g., from within the {@link ExecutionGraph}).
  * In contrast, there are also failures that are detected by the TaskManager, which are communicated
  * via {@link JobMasterGateway#updateTaskExecutionState(TaskExecutionState)}.
+ * Jiaxl:fault processing logic
  */
 public interface InternalFailuresListener {
 

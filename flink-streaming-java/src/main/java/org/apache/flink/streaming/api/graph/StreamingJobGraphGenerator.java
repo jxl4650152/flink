@@ -464,6 +464,8 @@ public class StreamingJobGraphGenerator {
 		// TODO: inherit InputDependencyConstraint from the head operator
 		jobVertex.setInputDependencyConstraint(streamGraph.getExecutionConfig().getDefaultInputDependencyConstraint());
 
+		jobVertex.setBorder(streamNode.isBorder());
+		jobVertex.setCloudId(streamNode.getCloudId());
 		jobVertices.put(streamNodeId, jobVertex);
 		builtVertices.add(streamNodeId);
 		jobGraph.addVertex(jobVertex);

@@ -100,6 +100,18 @@ public interface ResourceManagerGateway extends FencedRpcGateway<ResourceManager
 		@RpcTimeout Time timeout);
 
 	/**
+	 * Register a CloudManager at the resource manager.
+	 *
+	 * @param cloudManagerRegistration the task executor registration.
+	 * @param timeout The timeout for the response.
+	 *
+	 * @return The future to the response by the ResourceManager.
+	 */
+	CompletableFuture<RegistrationResponse> registerCloudManager(
+		CloudManagerRegistration cloudManagerRegistration,
+		@RpcTimeout Time timeout);
+
+	/**
 	 * Sends the given {@link SlotReport} to the ResourceManager.
 	 *
 	 * @param taskManagerRegistrationId id identifying the sending TaskManager
@@ -163,6 +175,7 @@ public interface ResourceManagerGateway extends FencedRpcGateway<ResourceManager
 	 */
 	void disconnectTaskManager(ResourceID resourceID, Exception cause);
 
+	void disconnectCloudManager(ResourceID resourceID, Exception cause);
 	/**
 	 * Disconnects a JobManager specified by the given resourceID from the {@link ResourceManager}.
 	 *

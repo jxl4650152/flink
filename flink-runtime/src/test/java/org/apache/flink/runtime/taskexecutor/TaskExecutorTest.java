@@ -183,7 +183,9 @@ public class TaskExecutorTest extends TestLogger {
 		MemorySize.parse("1m"),
 		MemorySize.parse("2m"),
 		MemorySize.parse("3m"),
-		MemorySize.parse("4m"));
+		MemorySize.parse("4m"),
+		"cloud1",
+		false);
 
 	@Rule
 	public final TemporaryFolder tmp = new TemporaryFolder();

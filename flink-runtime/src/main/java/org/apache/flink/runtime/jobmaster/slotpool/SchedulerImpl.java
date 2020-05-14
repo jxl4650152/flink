@@ -20,6 +20,7 @@ package org.apache.flink.runtime.jobmaster.slotpool;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
 import org.apache.flink.runtime.clusterframework.types.SlotProfile;
 import org.apache.flink.runtime.concurrent.ComponentMainThreadExecutor;
 import org.apache.flink.runtime.concurrent.FutureUtils;
@@ -268,6 +269,15 @@ public class SchedulerImpl implements Scheduler {
 		Collection<SlotSelectionStrategy.SlotInfoAndResources> slotInfoList =
 				slotPool.getAvailableSlotsInformation()
 						.stream()
+						.filter((info)->{
+							ResourceProfile profile = info.getResourceProfile();
+							ResourceProfile requestProfile = slotProfile.getTaskResourceProfile();
+							if (profile == requestProfile) {
+								return true;
+							} else {
+								return false;
+							}
+						})
 						.map(SlotSelectionStrategy.SlotInfoAndResources::fromSingleSlot)
 						.collect(Collectors.toList());
 

@@ -30,6 +30,7 @@ import org.apache.flink.runtime.checkpoint.CheckpointFailureReason;
 import org.apache.flink.runtime.checkpoint.CheckpointOptions;
 import org.apache.flink.runtime.checkpoint.CheckpointType;
 import org.apache.flink.runtime.checkpoint.JobManagerTaskRestore;
+import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
@@ -201,6 +202,8 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 	private final LeaderRetrievalService resourceManagerLeaderRetriever;
 
+	private final LeaderRetrievalService cloudManagerLeaderRetriever;
+
 	// ------------------------------------------------------------------------
 
 	private final HardwareDescription hardwareDescription;
@@ -223,10 +226,19 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	private ResourceManagerAddress resourceManagerAddress;
 
 	@Nullable
+	private String cloudManagerAddress;
+
+	@Nullable
 	private EstablishedResourceManagerConnection establishedResourceManagerConnection;
 
 	@Nullable
+	private EstablishedCloudManagerConnection establishedCloudManagerConnection;
+
+	@Nullable
 	private TaskExecutorToResourceManagerConnection resourceManagerConnection;
+
+	@Nullable
+	private TaskExecutorToCloudManagerConnection cloudManagerConnection;
 
 	@Nullable
 	private UUID currentRegistrationTimeoutId;
@@ -268,11 +280,11 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		this.shuffleEnvironment = taskExecutorServices.getShuffleEnvironment();
 		this.kvStateService = taskExecutorServices.getKvStateService();
 		this.resourceManagerLeaderRetriever = haServices.getResourceManagerLeaderRetriever();
-
+		this.cloudManagerLeaderRetriever = haServices.getCloudManagerLeaderRetriever();
 		this.jobManagerConnections = new HashMap<>(4);
 
 		this.hardwareDescription = HardwareDescription.extractFromSystem(taskExecutorServices.getManagedMemorySize());
-
+		this.cloudManagerAddress = null;
 		this.resourceManagerAddress = null;
 		this.resourceManagerConnection = null;
 		this.currentRegistrationTimeoutId = null;
@@ -322,8 +334,9 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 	private void startTaskExecutorServices() throws Exception {
 		try {
-			// start by connecting to the ResourceManager
+			// start by connecting to the ResourceManager and CloudManager
 			resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
+			cloudManagerLeaderRetriever.start(new CloudManagerLeaderListener());
 
 			// tell the task slot table who's responsible for the task slot actions
 			taskSlotTable.start(new SlotActionsImpl(), getMainThreadExecutor());
@@ -512,6 +525,8 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 					"Inconsistent job ID information inside TaskDeploymentDescriptor (" +
 						tdd.getJobId() + " vs. " + jobInformation.getJobId() + ")");
 			}
+
+			cloudManagerConnection.getTargetGateway().submitTask(jobInformation.getJobName(),tdd.getSubtaskIndex(),taskInformation.getTaskName());
 
 			TaskMetricGroup taskMetricGroup = taskManagerMetricGroup.addTaskForJob(
 				jobInformation.getJobId(),
@@ -962,6 +977,13 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		reconnectToResourceManager(new FlinkException(String.format("ResourceManager leader changed to new address %s", resourceManagerAddress)));
 	}
 
+	private void notifyOfNewCloudManagerLeader(String newLeaderAddress, final UUID leaderSessionID) {
+		cloudManagerAddress = newLeaderAddress;
+		reconnectToCloudManager(new FlinkException(String.format("CloudManager leader changed to new address %s", cloudManagerAddress)));
+	}
+
+
+
 	@Nullable
 	private ResourceManagerAddress createResourceManagerAddress(@Nullable String newLeaderAddress, @Nullable ResourceManagerId newResourceManagerId) {
 		if (newLeaderAddress == null) {
@@ -1000,8 +1022,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			taskManagerConfiguration.getTotalResourceProfile()
 		);
 
-		resourceManagerConnection =
-			new TaskExecutorToResourceManagerConnection(
+		resourceManagerConnection =  new TaskExecutorToResourceManagerConnection(
 				log,
 				getRpcService(),
 				taskManagerConfiguration.getRetryingRegistrationConfiguration(),
@@ -1009,8 +1030,25 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 				resourceManagerAddress.getResourceManagerId(),
 				getMainThreadExecutor(),
 				new ResourceManagerRegistrationListener(),
-				taskExecutorRegistration);
+				taskExecutorRegistration
+			);
+
 		resourceManagerConnection.start();
+	}
+
+	private void reconnectToCloudManager(Exception cause){
+		assert(resourceManagerAddress != null);
+
+		log.info("Connecting to CloudManager {}.", cloudManagerAddress);
+
+		final TaskExecutorRegistration taskExecutorRegistration = new TaskExecutorRegistration(
+			getAddress(),
+			getResourceID(),
+			taskManagerLocation.dataPort(),
+			hardwareDescription,
+			taskManagerConfiguration.getDefaultSlotResourceProfile(),
+			taskManagerConfiguration.getTotalResourceProfile()
+		);
 	}
 
 	private void establishResourceManagerConnection(
@@ -1058,6 +1096,29 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			taskExecutorRegistrationId);
 
 		stopRegistrationTimeout();
+	}
+
+	private void establishCloudManagerConnection(
+		CloudManagerGateway cloudManagerGateway,
+		ResourceID cloudManagerId
+	) {
+
+		final CompletableFuture<Acknowledge> slotReportResponseFuture = cloudManagerGateway.sendSlotReport(
+			getResourceID(),
+			taskSlotTable.createSlotReport(getResourceID()),
+			taskManagerConfiguration.getTimeout());
+
+		slotReportResponseFuture.whenCompleteAsync(
+			(acknowledge, throwable) -> {
+				if (throwable != null) {
+					log.info("Failed to send initial slot report to CloudManager.", throwable);
+				}
+			}, getMainThreadExecutor());
+
+		establishedCloudManagerConnection = new EstablishedCloudManagerConnection(
+			cloudManagerGateway,
+			cloudManagerId
+		);
 	}
 
 	private void closeResourceManagerConnection(Exception cause) {
@@ -1669,6 +1730,23 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		}
 	}
 
+	private final class CloudManagerLeaderListener implements LeaderRetrievalListener {
+
+		@Override
+		public void notifyLeaderAddress(final String leaderAddress, final UUID leaderSessionID) {
+			runAsync(
+				() -> notifyOfNewCloudManagerLeader(
+					leaderAddress,
+					leaderSessionID)
+			);
+		}
+
+		@Override
+		public void handleError(Exception exception) {
+			onFatalError(exception);
+		}
+	}
+
 	private final class JobLeaderListenerImpl implements JobLeaderListener {
 
 		@Override
@@ -1719,6 +1797,32 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 							resourceManagerId,
 							taskExecutorRegistrationId,
 							clusterInformation);
+					}
+				});
+		}
+
+		@Override
+		public void onRegistrationFailure(Throwable failure) {
+			onFatalError(failure);
+		}
+	}
+
+	private final class CloudManagerRegistrationListener implements RegistrationConnectionListener<TaskExecutorToCloudManagerConnection, TaskExecutorRegistrationOnCloudManagerSuccess> {
+
+		@Override
+		public void onRegistrationSuccess(TaskExecutorToCloudManagerConnection connection, TaskExecutorRegistrationOnCloudManagerSuccess success) {
+			final ResourceID resourceManagerId = success.getCloudManagerId();
+			final CloudManagerGateway cloudManagerGateway = connection.getTargetGateway();
+
+			runAsync(
+				() -> {
+					// filter out outdated connections
+					//noinspection ObjectEquality
+					if (cloudManagerConnection == connection) {
+						establishCloudManagerConnection(
+							cloudManagerGateway,
+							resourceManagerId
+						);
 					}
 				});
 		}

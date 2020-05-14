@@ -66,6 +66,17 @@ public class SourceTransformation<T> extends PhysicalTransformation<T> {
 		this.operatorFactory = operatorFactory;
 	}
 
+	public SourceTransformation(
+		String name,
+		StreamOperatorFactory<T> operatorFactory,
+		TypeInformation<T> outputType,
+		int parallelism,
+		String cloudId) {
+		super(name, outputType, parallelism);
+		this.operatorFactory = operatorFactory;
+		setCLoudId(cloudId);
+	}
+
 	@VisibleForTesting
 	public StreamSource<T, ?> getOperator() {
 		return (StreamSource<T, ?>) ((SimpleOperatorFactory) operatorFactory).getOperator();

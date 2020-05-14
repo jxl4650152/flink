@@ -80,6 +80,9 @@ public class StreamNode implements Serializable {
 	private String transformationUID;
 	private String userHash;
 
+	private String cloudId;
+	private boolean isBorder;
+
 	@VisibleForTesting
 	public StreamNode(
 			Integer id,
@@ -109,6 +112,8 @@ public class StreamNode implements Serializable {
 		this.jobVertexClass = jobVertexClass;
 		this.slotSharingGroup = slotSharingGroup;
 		this.coLocationGroup = coLocationGroup;
+		this.cloudId="";
+		this.isBorder=false;
 	}
 
 	public void addInEdge(StreamEdge inEdge) {
@@ -362,5 +367,21 @@ public class StreamNode implements Serializable {
 	@Override
 	public int hashCode() {
 		return id;
+	}
+
+	public String getCloudId() {
+		return cloudId;
+	}
+
+	public void setCloudId(String cloudId) {
+		this.cloudId = cloudId;
+	}
+
+	public boolean isBorder() {
+		return isBorder;
+	}
+
+	public void setBorder(boolean border) {
+		isBorder = border;
 	}
 }

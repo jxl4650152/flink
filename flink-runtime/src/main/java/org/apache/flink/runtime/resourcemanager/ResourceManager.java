@@ -23,6 +23,8 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.runtime.blob.TransientBlobKey;
+import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
+import org.apache.flink.runtime.cloudmanager.CloudManagerRegistrationSuccess;
 import org.apache.flink.runtime.clusterframework.ApplicationStatus;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
@@ -112,8 +114,17 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	/** All currently registered TaskExecutors with there framework specific worker information. */
 	private final Map<ResourceID, WorkerRegistration<WorkerType>> taskExecutors;
 
+	/** All currently registered CloudManagers with there framework specific worker information. */
+	private final Map<ResourceID, CloudManagerRegistration> cloudManagers;
+
+	/** All currently registered CloudManagers with there framework specific worker information. */
+	private final Map<String, CloudManagerGateway> cloudManagerGateways;
+
 	/** Ongoing registration of TaskExecutors per resource ID. */
 	private final Map<ResourceID, CompletableFuture<TaskExecutorGateway>> taskExecutorGatewayFutures;
+
+	/** Ongoing registration of  CloudManagers per resource ID. */
+	private final Map<String, CompletableFuture<CloudManagerGateway>> cloudManagerGatewayFutures;
 
 	/** High availability services for leader retrieval and election. */
 	private final HighAvailabilityServices highAvailabilityServices;
@@ -174,9 +185,12 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		this.jmResourceIdRegistrations = new HashMap<>(4);
 		this.taskExecutors = new HashMap<>(8);
 		this.taskExecutorGatewayFutures = new HashMap<>(8);
+		this.cloudManagerGatewayFutures = new HashMap<>(8);
+		this.cloudManagers = new HashMap<>(8);
 
 		this.jobManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
 		this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
+		cloudManagerGateways = null;
 	}
 
 
@@ -380,6 +394,32 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	}
 
 	@Override
+	public CompletableFuture<RegistrationResponse> registerCloudManager(
+		final CloudManagerRegistration cloudManagerRegistration,
+		final Time timeout) {
+
+		CompletableFuture<CloudManagerGateway> cloudManagerGatewayFuture = getRpcService().connect(cloudManagerRegistration.getCloudManagerAddress(), CloudManagerGateway.class);
+		cloudManagerGatewayFutures.put(cloudManagerRegistration.getCloudId(), cloudManagerGatewayFuture);
+
+		return cloudManagerGatewayFuture.handleAsync(
+			(CloudManagerGateway CloudManagerGateway, Throwable throwable) -> {
+				final String resourceId = cloudManagerRegistration.getCloudId();
+				if (cloudManagerGatewayFuture == cloudManagerGatewayFutures.get(resourceId)) {
+					taskExecutorGatewayFutures.remove(resourceId);
+					if (throwable != null) {
+						return new RegistrationResponse.Decline(throwable.getMessage());
+					} else {
+						return registerCloudManagerInternal(CloudManagerGateway, cloudManagerRegistration);
+					}
+				} else {
+					log.info("Ignoring outdated CloudManagerGateway connection.");
+					return new RegistrationResponse.Decline("Decline outdated cloudmanager registration.");
+				}
+			},
+			getMainThreadExecutor());
+	}
+
+	@Override
 	public CompletableFuture<Acknowledge> sendSlotReport(ResourceID taskManagerResourceId, InstanceID taskManagerRegistrationId, SlotReport slotReport, Time timeout) {
 		final WorkerRegistration<WorkerType> workerTypeWorkerRegistration = taskExecutors.get(taskManagerResourceId);
 
@@ -404,6 +444,11 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	@Override
 	public void disconnectTaskManager(final ResourceID resourceId, final Exception cause) {
 		closeTaskManagerConnection(resourceId, cause);
+	}
+
+	@Override
+	public void disconnectCloudManager(final ResourceID resourceId, final Exception cause) {
+		//Todo: implements disconnect
 	}
 
 	@Override
@@ -717,6 +762,33 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 				resourceId,
 				clusterInformation);
 		}
+	}
+
+	/**
+	 * Registers a new CloudManager.
+	 *
+	 * @param cloudManagerRegistration task executor registration parameters
+	 * @return RegistrationResponse
+	 */
+	private RegistrationResponse registerCloudManagerInternal(
+		CloudManagerGateway cloudManagerGateway,
+		CloudManagerRegistration cloudManagerRegistration) {
+		ResourceID cloudManagerResourceId = cloudManagerRegistration.getResourceId();
+		CloudManagerRegistration oldRegistration = cloudManagers.remove(cloudManagerResourceId);
+		if (oldRegistration != null) {
+
+			log.debug("Replacing old registration of CloudManager {}.", cloudManagerResourceId);
+		}
+
+		String cloudManagerAddress = cloudManagerRegistration.getCloudManagerAddress();
+
+		log.info("Registering CloudManager with ResourceID {} ({}) at ResourceManager", cloudManagerResourceId, cloudManagerAddress);
+		cloudManagers.put(cloudManagerResourceId, cloudManagerRegistration);
+
+		return new CloudManagerRegistrationSuccess(
+			new InstanceID(),
+			resourceId,
+			clusterInformation);
 	}
 
 	private void registerSlotAndTaskExecutorMetrics() {

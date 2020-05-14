@@ -293,6 +293,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 			partitionTracker);
 	}
 
+
 	//----------------------------------------------------------------------------------------------
 	// Lifecycle management
 	//----------------------------------------------------------------------------------------------
@@ -966,6 +967,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 			establishedResourceManagerConnection = new EstablishedResourceManagerConnection(
 				resourceManagerGateway,
 				resourceManagerResourceId);
+			createCloudManagerRegistration(resourceManagerGateway);
 
 			slotPool.connectToResourceManager(resourceManagerGateway);
 
@@ -984,6 +986,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 			log.debug("Ignoring resource manager connection to {} because it's duplicated or outdated.", resourceManagerId);
 
 		}
+	}
+
+	private void createCloudManagerRegistration(ResourceManagerGateway resourceManagerGateway) {
 	}
 
 	private void closeResourceManagerConnection(Exception cause) {

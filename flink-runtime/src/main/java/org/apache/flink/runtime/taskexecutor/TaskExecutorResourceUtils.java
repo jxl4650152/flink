@@ -46,7 +46,9 @@ public class TaskExecutorResourceUtils {
 		TaskManagerOptions.TASK_OFF_HEAP_MEMORY,
 		TaskManagerOptions.NETWORK_MEMORY_MIN,
 		TaskManagerOptions.NETWORK_MEMORY_MAX,
-		TaskManagerOptions.MANAGED_MEMORY_SIZE
+		TaskManagerOptions.MANAGED_MEMORY_SIZE,
+		TaskManagerOptions.TASK_MANAGER_CLOUD_ID,
+		TaskManagerOptions.IS_BORDER
 	);
 
 	private static final List<ConfigOption<?>> UNUSED_CONFIG_OPTIONS = Arrays.asList(
@@ -76,7 +78,9 @@ public class TaskExecutorResourceUtils {
 			config.get(TaskManagerOptions.TASK_HEAP_MEMORY),
 			config.get(TaskManagerOptions.TASK_OFF_HEAP_MEMORY),
 			config.get(TaskManagerOptions.NETWORK_MEMORY_MIN),
-			config.get(TaskManagerOptions.MANAGED_MEMORY_SIZE)
+			config.get(TaskManagerOptions.MANAGED_MEMORY_SIZE),
+			config.get(TaskManagerOptions.TASK_MANAGER_CLOUD_ID),
+			config.get(TaskManagerOptions.IS_BORDER)
 		);
 	}
 
@@ -110,6 +114,8 @@ public class TaskExecutorResourceUtils {
 			.setTaskOffHeapMemory(taskExecutorResourceSpec.getTaskOffHeapSize().divide(numberOfSlots))
 			.setManagedMemory(taskExecutorResourceSpec.getManagedMemorySize().divide(numberOfSlots))
 			.setNetworkMemory(taskExecutorResourceSpec.getNetworkMemSize().divide(numberOfSlots))
+			.setCloudId(taskExecutorResourceSpec.getCloudId())
+			.setBorder(taskExecutorResourceSpec.isBorder())
 			.build();
 	}
 
@@ -121,6 +127,8 @@ public class TaskExecutorResourceUtils {
 			.setTaskOffHeapMemory(taskExecutorResourceSpec.getTaskOffHeapSize())
 			.setManagedMemory(taskExecutorResourceSpec.getManagedMemorySize())
 			.setNetworkMemory(taskExecutorResourceSpec.getNetworkMemSize())
+			.setCloudId(taskExecutorResourceSpec.getCloudId())
+			.setBorder(taskExecutorResourceSpec.isBorder())
 			.build();
 	}
 
