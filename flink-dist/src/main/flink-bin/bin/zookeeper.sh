@@ -17,6 +17,7 @@
 # limitations under the License.
 ################################################################################
 
+
 # Start/stop a ZooKeeper quorum peer.
 USAGE="Usage: zookeeper.sh ((start|start-foreground) peer-id)|stop|stop-all"
 

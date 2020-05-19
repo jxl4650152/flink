@@ -568,7 +568,7 @@ readSlaves() {
     SLAVES_FILE="${FLINK_CONF_DIR}/slaves"
 
     if [[ ! -f "$SLAVES_FILE" ]]; then
-        echo "No slaves file. Please specify slaves in 'conf/slaves'."
+        echo "No slaves file found. Please specify slaves in 'conf/slaves'."
         exit 1
     fi
 

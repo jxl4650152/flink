@@ -17,6 +17,7 @@
 # limitations under the License.
 ################################################################################
 
+
 # Start/stop a Flink HistoryServer
 USAGE="Usage: historyserver.sh (start|start-foreground|stop)"
 

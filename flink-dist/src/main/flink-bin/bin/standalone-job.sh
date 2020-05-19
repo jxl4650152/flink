@@ -17,6 +17,7 @@
 # limitations under the License.
 ################################################################################
 
+
 # Start/stop a Flink JobManager.
 USAGE="Usage: standalone-job.sh ((start|start-foreground))|stop [args]"
 

@@ -50,6 +50,10 @@ case $DAEMON in
         CLASS_TO_RUN=org.apache.flink.container.entrypoint.StandaloneJobClusterEntryPoint
     ;;
 
+  (cloudmanager)
+        CLASS_TO_RUN=org.apache.flink.container.entrypoint.CloudManagerEntryPoint
+    ;;
+
     (*)
         echo "Unknown daemon '${DAEMON}'. $USAGE."
         exit 1
