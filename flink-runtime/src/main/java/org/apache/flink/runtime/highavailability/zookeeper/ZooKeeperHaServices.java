@@ -136,6 +136,11 @@ public class ZooKeeperHaServices implements HighAvailabilityServices {
 	}
 
 	@Override
+	public LeaderRetrievalService getCloudManagerLeaderRetriever() {
+		return null;
+	}
+
+	@Override
 	public LeaderRetrievalService getDispatcherLeaderRetriever() {
 		return ZooKeeperUtils.createLeaderRetrievalService(client, configuration, DISPATCHER_LEADER_PATH);
 	}

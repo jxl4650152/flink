@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.resourcemanager.slotmanager;
 
+import org.apache.flink.runtime.cloudmanager.CloudManagerToResourceManagerConnection;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.SlotID;
 import org.apache.flink.runtime.instance.InstanceID;
@@ -92,6 +93,11 @@ public class TestingSlotManager implements SlotManager {
 
 	@Override
 	public void registerTaskManager(TaskExecutorConnection taskExecutorConnection, SlotReport initialSlotReport) {
+
+	}
+
+	@Override
+	public void registerCloudManager(CloudManagerToResourceManagerConnection cloudManagerConnection) {
 
 	}
 

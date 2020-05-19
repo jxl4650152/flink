@@ -134,6 +134,11 @@ public class TestingHighAvailabilityServices implements HighAvailabilityServices
 	}
 
 	@Override
+	public LeaderRetrievalService getCloudManagerLeaderRetriever() {
+		return null;
+	}
+
+	@Override
 	public LeaderRetrievalService getDispatcherLeaderRetriever() {
 		LeaderRetrievalService service = this.dispatcherLeaderRetriever;
 		if (service != null) {

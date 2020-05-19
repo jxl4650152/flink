@@ -71,6 +71,11 @@ public class EmbeddedHaServices extends AbstractNonHaServices {
 	}
 
 	@Override
+	public LeaderRetrievalService getCloudManagerLeaderRetriever() {
+		return null;
+	}
+
+	@Override
 	public LeaderRetrievalService getDispatcherLeaderRetriever() {
 		return dispatcherLeaderService.createLeaderRetrievalService();
 	}

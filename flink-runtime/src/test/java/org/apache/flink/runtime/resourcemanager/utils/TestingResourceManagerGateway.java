@@ -35,11 +35,7 @@ import org.apache.flink.runtime.jobmaster.JobMasterId;
 import org.apache.flink.runtime.jobmaster.JobMasterRegistrationSuccess;
 import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.runtime.registration.RegistrationResponse;
-import org.apache.flink.runtime.resourcemanager.ResourceManagerGateway;
-import org.apache.flink.runtime.resourcemanager.ResourceManagerId;
-import org.apache.flink.runtime.resourcemanager.ResourceOverview;
-import org.apache.flink.runtime.resourcemanager.SlotRequest;
-import org.apache.flink.runtime.resourcemanager.TaskExecutorRegistration;
+import org.apache.flink.runtime.resourcemanager.*;
 import org.apache.flink.runtime.rest.messages.taskmanager.TaskManagerInfo;
 import org.apache.flink.runtime.taskexecutor.FileType;
 import org.apache.flink.runtime.taskexecutor.SlotReport;
@@ -228,6 +224,11 @@ public class TestingResourceManagerGateway implements ResourceManagerGateway {
 	}
 
 	@Override
+	public CompletableFuture<RegistrationResponse> registerCloudManager(CloudManagerRegistration cloudManagerRegistration, Time timeout) {
+		return null;
+	}
+
+	@Override
 	public void notifySlotAvailable(InstanceID instanceId, SlotID slotID, AllocationID oldAllocationId) {
 		final Consumer<Tuple3<InstanceID, SlotID, AllocationID>> currentNotifySlotAvailableConsumer = notifySlotAvailableConsumer;
 
@@ -267,6 +268,11 @@ public class TestingResourceManagerGateway implements ResourceManagerGateway {
 		if (currentConsumer != null) {
 			currentConsumer.accept(Tuple2.of(resourceID, cause));
 		}
+	}
+
+	@Override
+	public void disconnectCloudManager(ResourceID resourceID, Exception cause) {
+
 	}
 
 	@Override

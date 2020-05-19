@@ -62,6 +62,11 @@ public class TestingManualHighAvailabilityServices implements HighAvailabilitySe
 	}
 
 	@Override
+	public LeaderRetrievalService getCloudManagerLeaderRetriever() {
+		return null;
+	}
+
+	@Override
 	public LeaderRetrievalService getDispatcherLeaderRetriever() {
 		return dispatcherLeaderService.createLeaderRetrievalService();
 	}

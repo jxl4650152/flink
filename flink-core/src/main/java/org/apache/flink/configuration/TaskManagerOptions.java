@@ -101,7 +101,7 @@ public class TaskManagerOptions {
 			.withDescription("cloud id of this taskmanager");
 
 	public static final ConfigOption<Boolean> IS_BORDER =
-		key("is.border")
+		key("taskmanager.border")
 			.booleanType()
 			.defaultValue(false)
 			.withDescription("is this taskmanager on border");

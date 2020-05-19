@@ -102,7 +102,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 
 	@Override
 	public CompletableFuture<Acknowledge> submitTask(String tdd, int jobMasterId, String timeout) {
-		log.info("Receive submit task({}) of job({})from.", tdd.getSubtaskIndex(), tdd.getJobId());
+		log.info("Receive submit task({}) of job({})from.", tdd, tdd);
 		return CompletableFuture.completedFuture(Acknowledge.get());
 	}
 

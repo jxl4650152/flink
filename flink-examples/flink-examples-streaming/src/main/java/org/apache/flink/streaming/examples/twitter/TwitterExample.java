@@ -60,7 +60,7 @@ public class TwitterExample {
 
 		// Checking input parameters
 		final ParameterTool params = ParameterTool.fromArgs(args);
-		System.out.println("Usage: TwitterExample [--output <path>] " +
+		System.out.println("Usage: TwitterExample  [--output <path>] " +
 				"[--twitter-source.consumerKey <key> --twitter-source.consumerSecret <secret> --twitter-source.token <token> --twitter-source.tokenSecret <tokenSecret>]");
 
 		// set up the execution environment

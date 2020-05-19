@@ -42,6 +42,7 @@ public class StandaloneHaServicesTest extends TestLogger {
 	private final String dispatcherAddress = "dispatcher";
 	private final String resourceManagerAddress = "resourceManager";
 	private final String webMonitorAddress = "webMonitor";
+	private final String cloudManagerAddress = "cloudmanager";
 
 	private StandaloneHaServices standaloneHaServices;
 
@@ -52,7 +53,8 @@ public class StandaloneHaServicesTest extends TestLogger {
 			resourceManagerAddress,
 			dispatcherAddress,
 			jobManagerAddress,
-			webMonitorAddress);
+			webMonitorAddress,
+			cloudManagerAddress);
 	}
 
 	@After
