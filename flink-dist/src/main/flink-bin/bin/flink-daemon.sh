@@ -51,7 +51,7 @@ case $DAEMON in
     ;;
 
   (cloudmanager)
-        CLASS_TO_RUN=org.apache.flink.container.entrypoint.CloudManagerEntryPoint
+        CLASS_TO_RUN=org.apache.flink.runtime.entrypoint.CloudManagerEntrypoint
     ;;
 
     (*)

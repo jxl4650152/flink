@@ -6,13 +6,14 @@ import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
 import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.runtime.registration.RegistrationResponse;
 import org.apache.flink.runtime.resourcemanager.TaskExecutorRegistration;
+import org.apache.flink.runtime.rpc.FencedRpcGateway;
 import org.apache.flink.runtime.rpc.RpcGateway;
 import org.apache.flink.runtime.rpc.RpcTimeout;
 import org.apache.flink.runtime.taskexecutor.SlotReport;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface CloudManagerGateway extends RpcGateway {
+public interface CloudManagerGateway extends FencedRpcGateway<ResourceID> {
 
 	CompletableFuture<Acknowledge> submitTask(
 		String tdd,

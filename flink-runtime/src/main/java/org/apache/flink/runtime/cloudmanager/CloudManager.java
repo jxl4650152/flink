@@ -18,6 +18,7 @@ import org.apache.flink.runtime.resourcemanager.ResourceManagerId;
 import org.apache.flink.runtime.resourcemanager.TaskExecutorRegistration;
 import org.apache.flink.runtime.resourcemanager.exceptions.ResourceManagerException;
 import org.apache.flink.runtime.rpc.FatalErrorHandler;
+import org.apache.flink.runtime.rpc.FencedRpcEndpoint;
 import org.apache.flink.runtime.rpc.RpcEndpoint;
 import org.apache.flink.runtime.rpc.RpcService;
 import org.apache.flink.runtime.rpc.akka.AkkaRpcServiceUtils;
@@ -34,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
+public class CloudManager extends FencedRpcEndpoint<ResourceID> implements CloudManagerGateway {
 	public static final String CLOUD_MANAGER_NAME = "cloudmanager";
 	private final FatalErrorHandler fatalErrorHandler;
 	private RpcService rpcService;
@@ -67,7 +68,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 						FatalErrorHandler fatalErrorHandler,
 						HighAvailabilityServices haServices,
 						CloudManagerConfiguration cmc){
-		super(rpcService, AkkaRpcServiceUtils.createRandomName(CLOUD_MANAGER_NAME));
+		super(rpcService, CloudManager.CLOUD_MANAGER_NAME, null);
 		this.rpcService = rpcService;
 		this.resourceId = rid;
 		this.taskExecutors = new HashMap<>(8);
@@ -120,6 +121,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 
 	@Override
 	public CompletableFuture<RegistrationResponse> registerTaskExecutor(TaskExecutorRegistration taskExecutorRegistration, Time timeout) {
+		log.info("Receive slot report from TaskManager:{}.", taskExecutorRegistration.getResourceId());
 		return null;
 	}
 
@@ -127,7 +129,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 	public CompletableFuture<RegistrationResponse> registerTaskExecutorOnCloudManager(
 		final TaskExecutorRegistration taskExecutorRegistration,
 		final Time timeout) {
-
+		log.info("Receive taskManager registration {}.", taskExecutorRegistration.getResourceId());
 		CompletableFuture<TaskExecutorGateway> taskExecutorGatewayFuture = getRpcService().connect(taskExecutorRegistration.getTaskExecutorAddress(), TaskExecutorGateway.class);
 		taskExecutorGatewayFutures.put(taskExecutorRegistration.getResourceId(), taskExecutorGatewayFuture);
 
@@ -137,6 +139,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 				if (taskExecutorGatewayFuture == taskExecutorGatewayFutures.get(resourceId)) {
 					taskExecutorGatewayFutures.remove(resourceId);
 					if (throwable != null) {
+						log.info("Decline taskManager registration {}.", taskExecutorRegistration.getResourceId());
 						return new RegistrationResponse.Decline(throwable.getMessage());
 					} else {
 						return registerTaskExecutorInternal(taskExecutorGateway, taskExecutorRegistration);
@@ -308,7 +311,7 @@ public class CloudManager extends RpcEndpoint implements CloudManagerGateway {
 			final InstanceID cloudManagerRegistrationId = success.getRegistrationId();
 			final ClusterInformation clusterInformation = success.getClusterInformation();
 			final ResourceManagerGateway resourceManagerGateway = connection.getTargetGateway();
-			log.info("CloudManager({}) to JobManager registration success. Start establish connection....", resourceId);
+			log.info("CloudManager({}) to JobManager registration success. Connection established.", resourceId);
 			runAsync(
 				() -> {
 					// filter out outdated connections

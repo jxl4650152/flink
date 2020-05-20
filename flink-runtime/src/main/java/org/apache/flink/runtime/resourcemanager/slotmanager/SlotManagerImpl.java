@@ -378,6 +378,8 @@ public class SlotManagerImpl implements SlotManager {
 			ArrayList<SlotID> reportedSlots = new ArrayList<>();
 
 			for (SlotStatus slotStatus : initialSlotReport) {
+				ResourceProfile rp = slotStatus.getResourceProfile();
+				LOG.info("Receive slot({}) from taskmanager({}) of cloud({}).", slotStatus.getSlotID(), taskExecutorConnection.getInstanceID(), rp.getCloudId());
 				reportedSlots.add(slotStatus.getSlotID());
 			}
 

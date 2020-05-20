@@ -75,3 +75,13 @@ if [[ $STARTSTOP == "start-foreground" ]]; then
 else
     "${FLINK_BIN_DIR}"/flink-daemon.sh $STARTSTOP $ENTRYPOINT "${args[@]}"
 fi
+
+# Start TaskManager instance(s)
+if [[ $STARTSTOP == "start" ]]; then
+TMSlaves start
+fi
+
+if [[ $STARTSTOP == "stop" ]]; then
+TMSlaves stop
+fi
+

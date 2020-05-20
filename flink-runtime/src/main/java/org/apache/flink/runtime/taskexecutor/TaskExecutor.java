@@ -30,7 +30,9 @@ import org.apache.flink.runtime.checkpoint.CheckpointFailureReason;
 import org.apache.flink.runtime.checkpoint.CheckpointOptions;
 import org.apache.flink.runtime.checkpoint.CheckpointType;
 import org.apache.flink.runtime.checkpoint.JobManagerTaskRestore;
+import org.apache.flink.runtime.cloudmanager.CloudManagerAddress;
 import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
+import org.apache.flink.runtime.cloudmanager.CloudManagerId;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
@@ -226,7 +228,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	private ResourceManagerAddress resourceManagerAddress;
 
 	@Nullable
-	private String cloudManagerAddress;
+	private CloudManagerAddress cloudManagerAddress;
 
 	@Nullable
 	private EstablishedResourceManagerConnection establishedResourceManagerConnection;
@@ -978,7 +980,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	}
 
 	private void notifyOfNewCloudManagerLeader(String newLeaderAddress, final UUID leaderSessionID) {
-		cloudManagerAddress = newLeaderAddress;
+		cloudManagerAddress = createCloudManagerAddress(newLeaderAddress, leaderSessionID);
 		reconnectToCloudManager(new FlinkException(String.format("CloudManager leader changed to new address %s", cloudManagerAddress)));
 	}
 
@@ -994,15 +996,37 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		}
 	}
 
+	@Nullable
+	private CloudManagerAddress createCloudManagerAddress(@Nullable String newLeaderAddress, @Nullable UUID newResourceManagerId) {
+		if (newLeaderAddress == null) {
+			return null;
+		} else {
+			assert(newResourceManagerId != null);
+			return new CloudManagerAddress(newLeaderAddress, CloudManagerId.fromUuid(newResourceManagerId));
+		}
+	}
+
 	private void reconnectToResourceManager(Exception cause) {
 		closeResourceManagerConnection(cause);
 		startRegistrationTimeout();
 		tryConnectToResourceManager();
 	}
 
+	private void reconnectToCloudManager(Exception cause) {
+//		closeResourceManagerConnection(cause);
+		startRegistrationTimeout();
+		tryConnectToCloudManager();
+	}
+
 	private void tryConnectToResourceManager() {
 		if (resourceManagerAddress != null) {
 			connectToResourceManager();
+		}
+	}
+
+	private void tryConnectToCloudManager() {
+		if (cloudManagerAddress != null) {
+			connectToCloudManager();
 		}
 	}
 
@@ -1036,8 +1060,8 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		resourceManagerConnection.start();
 	}
 
-	private void reconnectToCloudManager(Exception cause){
-		assert(resourceManagerAddress != null);
+	private void connectToCloudManager(){
+		assert(cloudManagerAddress != null);
 
 		log.info("Connecting to CloudManager {}.", cloudManagerAddress);
 
@@ -1049,6 +1073,19 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			taskManagerConfiguration.getDefaultSlotResourceProfile(),
 			taskManagerConfiguration.getTotalResourceProfile()
 		);
+
+		cloudManagerConnection =  new TaskExecutorToCloudManagerConnection(
+			log,
+			getRpcService(),
+			taskManagerConfiguration.getRetryingRegistrationConfiguration(),
+			cloudManagerAddress.getAddress(),
+			cloudManagerAddress.getCloudManagerId(),
+			getMainThreadExecutor(),
+			new CloudManagerRegistrationListener(),
+			taskExecutorRegistration
+		);
+
+		cloudManagerConnection.start();
 	}
 
 	private void establishResourceManagerConnection(
@@ -1734,6 +1771,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 		@Override
 		public void notifyLeaderAddress(final String leaderAddress, final UUID leaderSessionID) {
+			log.info("Notification of new CloudManager leader {}", leaderAddress);
 			runAsync(
 				() -> notifyOfNewCloudManagerLeader(
 					leaderAddress,

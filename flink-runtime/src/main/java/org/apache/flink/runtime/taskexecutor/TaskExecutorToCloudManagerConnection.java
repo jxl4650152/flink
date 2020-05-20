@@ -78,7 +78,7 @@ public class TaskExecutorToCloudManagerConnection
 
 	@Override
 	protected void onRegistrationSuccess(TaskExecutorRegistrationOnCloudManagerSuccess success) {
-		log.info("Successful registration at resource manager {} under registration id {}.",
+		log.info("Successful registration at cloud manager {} under registration id {}.",
 			getTargetAddress(), success.getCloudManagerId());
 
 		registrationListener.onRegistrationSuccess(this, success);
@@ -86,7 +86,7 @@ public class TaskExecutorToCloudManagerConnection
 
 	@Override
 	protected void onRegistrationFailure(Throwable failure) {
-		log.info("Failed to register at resource manager {}.", getTargetAddress(), failure);
+		log.info("Failed to register at cloud manager {}.", getTargetAddress(), failure);
 
 		registrationListener.onRegistrationFailure(failure);
 	}
@@ -99,7 +99,7 @@ public class TaskExecutorToCloudManagerConnection
 			extends RetryingRegistration<CloudManagerId, CloudManagerGateway, TaskExecutorRegistrationOnCloudManagerSuccess> {
 
 		private final TaskExecutorRegistration taskExecutorRegistration;
-
+		private Logger logger;
 		CloudManagerRegistration(
 				Logger log,
 				RpcService rpcService,
@@ -108,15 +108,17 @@ public class TaskExecutorToCloudManagerConnection
 				RetryingRegistrationConfiguration retryingRegistrationConfiguration,
 				TaskExecutorRegistration taskExecutorRegistration) {
 
-			super(log, rpcService, "ResourceManager", CloudManagerGateway.class, targetAddress, cloudManagerId, retryingRegistrationConfiguration);
+			super(log, rpcService, "CloudManager", CloudManagerGateway.class, targetAddress, cloudManagerId, retryingRegistrationConfiguration);
 			this.taskExecutorRegistration = taskExecutorRegistration;
+			this.logger = log;
 		}
 
 
 		@Override
 		protected CompletableFuture<RegistrationResponse> invokeRegistration(CloudManagerGateway gateway, CloudManagerId fencingToken, long timeoutMillis) throws Exception {
 			Time timeout = Time.milliseconds(timeoutMillis);
-			return gateway.registerTaskExecutor(
+			logger.info("Send registerTaskExecutorOnCloudManager RPC call");
+			return gateway.registerTaskExecutorOnCloudManager(
 				taskExecutorRegistration,
 				timeout);
 		}

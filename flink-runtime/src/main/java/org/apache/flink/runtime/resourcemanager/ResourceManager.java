@@ -150,6 +150,9 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	/** The heartbeat manager with job managers. */
 	private HeartbeatManager<Void, Void> jobManagerHeartbeatManager;
 
+	/** The heartbeat manager with cloud managers. */
+	private HeartbeatManager<Void, Void> cloudManagerHeartbeatManager;
+
 	/**
 	 * Represents asynchronous state clearing work.
 	 *
@@ -190,6 +193,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
 		this.jobManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
 		this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
+		this.cloudManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
 		cloudManagerGateways = null;
 	}
 
@@ -782,7 +786,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 
 		String cloudManagerAddress = cloudManagerRegistration.getCloudManagerAddress();
 
-		log.info("Registering CloudManager with ResourceID {} ({}) at ResourceManager", cloudManagerResourceId, cloudManagerAddress);
+		log.info("Registering CloudManager({}) from cloud: {} at ResourceManager", cloudManagerResourceId, cloudManagerRegistration.getCloudId());
 		cloudManagers.put(cloudManagerResourceId, cloudManagerRegistration);
 
 		return new CloudManagerRegistrationSuccess(

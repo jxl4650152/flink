@@ -141,11 +141,13 @@ public abstract class RetryingRegistration<F extends Serializable, G extends Rpc
 			final CompletableFuture<G> rpcGatewayFuture;
 
 			if (FencedRpcGateway.class.isAssignableFrom(targetType)) {
+				log.info("Connecting FencedGateway {}", targetAddress);
 				rpcGatewayFuture = (CompletableFuture<G>) rpcService.connect(
 					targetAddress,
 					fencingToken,
 					targetType.asSubclass(FencedRpcGateway.class));
 			} else {
+				log.info("Connecting Gateway {}", targetAddress);
 				rpcGatewayFuture = rpcService.connect(targetAddress, targetType);
 			}
 
