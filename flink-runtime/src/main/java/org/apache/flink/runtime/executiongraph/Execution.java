@@ -1558,6 +1558,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			if (error == null) {
 				LOG.info("{} ({}) switched from {} to {}.", getVertex().getTaskNameWithSubtaskIndex(), getAttemptId(), currentState, targetState);
+				LOG.info("here");
 			} else {
 				LOG.info("{} ({}) switched from {} to {}.", getVertex().getTaskNameWithSubtaskIndex(), getAttemptId(), currentState, targetState, error);
 			}
@@ -1570,6 +1571,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			// make sure that the state transition completes normally.
 			// potential errors (in listeners may not affect the main logic)
 			try {
+				LOG.info("Notify state change");
 				vertex.notifyStateTransition(this, targetState, error);
 			}
 			catch (Throwable t) {
