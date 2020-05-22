@@ -284,7 +284,7 @@ public final class ResourceSpec implements Serializable {
 				Objects.equals(this.taskOffHeapMemory, that.taskOffHeapMemory) &&
 				Objects.equals(this.managedMemory, that.managedMemory) &&
 				Objects.equals(extendedResources, that.extendedResources) &&
-				cloudId.equals(that.cloudId) &&
+				((cloudId == null && that.cloudId == null) ||( cloudId != null && cloudId.equals(that.cloudId))  )  &&
 				isBorder == that.isBorder;
 		} else {
 			return false;
