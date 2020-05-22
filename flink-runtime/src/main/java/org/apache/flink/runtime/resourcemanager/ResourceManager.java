@@ -406,14 +406,16 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		cloudManagerGatewayFutures.put(cloudManagerRegistration.getCloudId(), cloudManagerGatewayFuture);
 
 		return cloudManagerGatewayFuture.handleAsync(
-			(CloudManagerGateway CloudManagerGateway, Throwable throwable) -> {
+			(CloudManagerGateway cloudManagerGateway, Throwable throwable) -> {
 				final String resourceId = cloudManagerRegistration.getCloudId();
+				slotManager.addCloudManagerGateway(resourceId, cloudManagerGateway);
+				slotManager.registerCloudManager(cloudManagerRegistration);
 				if (cloudManagerGatewayFuture == cloudManagerGatewayFutures.get(resourceId)) {
 					taskExecutorGatewayFutures.remove(resourceId);
 					if (throwable != null) {
 						return new RegistrationResponse.Decline(throwable.getMessage());
 					} else {
-						return registerCloudManagerInternal(CloudManagerGateway, cloudManagerRegistration);
+						return registerCloudManagerInternal(cloudManagerGateway, cloudManagerRegistration);
 					}
 				} else {
 					log.info("Ignoring outdated CloudManagerGateway connection.");

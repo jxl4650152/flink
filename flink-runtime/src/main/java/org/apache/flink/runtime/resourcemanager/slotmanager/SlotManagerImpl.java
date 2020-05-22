@@ -868,11 +868,9 @@ public class SlotManagerImpl implements SlotManager {
 		CloudManagerGateway cloudManagerGateway = cloudManagerGateways.get(pendingSlotRequest.getResourceProfile().getCloudId());
 		//check if cloud manager present
 		if (cloudManagerGateway == null) {
-			throw new IllegalStateException("Could not find a registered cloud manager for instance id " +
-				instanceID + '.');
+			throw new IllegalStateException("Could not find a registered cloud manager for cloudId " +
+				pendingSlotRequest.getResourceProfile().getCloudId() + '.');
 		}
-
-
 
 
 		if (taskManagerRegistration == null) {
