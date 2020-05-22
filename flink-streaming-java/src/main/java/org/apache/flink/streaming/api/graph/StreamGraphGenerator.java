@@ -336,7 +336,15 @@ public class StreamGraphGenerator {
 	private <T> Collection<Integer> transformPartition(PartitionTransformation<T> partition) {
 		Transformation<T> input = partition.getInput();
 		List<Integer> resultIds = new ArrayList<>();
-
+		String inputId = input.getCLoudId();
+		if (!partition.getCLoudId().equals("")){
+			if(!inputId.equals(partition.getCLoudId())){
+				input.setBorder(true);
+				partition.setBorder(true);
+			}
+		}else{
+			partition.setCLoudId(inputId);
+		}
 		Collection<Integer> transformedIds = transform(input);
 		for (Integer transformedId: transformedIds) {
 			int virtualId = Transformation.getNewNodeId();

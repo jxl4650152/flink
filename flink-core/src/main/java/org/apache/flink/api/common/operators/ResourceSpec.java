@@ -86,6 +86,10 @@ public final class ResourceSpec implements Serializable {
 	@Nullable // can be null only for UNKNOWN
 	private final MemorySize managedMemory;
 
+	private String cloudId;
+
+	private boolean isBorder;
+
 	private final Map<String, Resource> extendedResources = new HashMap<>(1);
 
 	private ResourceSpec(
@@ -102,6 +106,8 @@ public final class ResourceSpec implements Serializable {
 		this.taskHeapMemory = checkNotNull(taskHeapMemory);
 		this.taskOffHeapMemory = checkNotNull(taskOffHeapMemory);
 		this.managedMemory = checkNotNull(managedMemory);
+		this.cloudId = "cloud1";
+		this.isBorder = false;
 
 		for (Resource resource : extendedResources) {
 			if (resource != null) {
@@ -118,6 +124,8 @@ public final class ResourceSpec implements Serializable {
 		this.taskHeapMemory = null;
 		this.taskOffHeapMemory = null;
 		this.managedMemory = null;
+		this.cloudId = "cloud1";
+		this.isBorder = false;
 	}
 
 	/**
@@ -256,7 +264,9 @@ public final class ResourceSpec implements Serializable {
 				Objects.equals(this.taskHeapMemory, that.taskHeapMemory) &&
 				Objects.equals(this.taskOffHeapMemory, that.taskOffHeapMemory) &&
 				Objects.equals(this.managedMemory, that.managedMemory) &&
-				Objects.equals(extendedResources, that.extendedResources);
+				Objects.equals(extendedResources, that.extendedResources) &&
+				cloudId.equals(that.cloudId) &&
+				isBorder == that.isBorder;
 		} else {
 			return false;
 		}
@@ -286,6 +296,8 @@ public final class ResourceSpec implements Serializable {
 			"cpuCores=" + cpuCores.getValue() +
 			", taskHeapMemory=" + taskHeapMemory.toHumanReadableString() +
 			", taskOffHeapMemory=" + taskOffHeapMemory.toHumanReadableString() +
+			", cloudId=" + this.cloudId +
+			", isborder=" + this.isBorder +
 			", managedMemory=" + managedMemory.toHumanReadableString() + extResources +
 			'}';
 	}
@@ -305,6 +317,22 @@ public final class ResourceSpec implements Serializable {
 
 	public static Builder newBuilder(double cpuCores, int taskHeapMemoryMB) {
 		return new Builder(new CPUResource(cpuCores), MemorySize.ofMebiBytes(taskHeapMemoryMB));
+	}
+
+	public String getCloudId() {
+		return cloudId;
+	}
+
+	public void setCloudId(String cloudId) {
+		this.cloudId = cloudId;
+	}
+
+	public boolean isBorder() {
+		return isBorder;
+	}
+
+	public void setBorder(boolean border) {
+		isBorder = border;
 	}
 
 	/**

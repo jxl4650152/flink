@@ -17,6 +17,7 @@
 # limitations under the License.
 ################################################################################
 
+
 target="$0"
 # For the case, the executable has been directly symlinked, figure out
 # the correct bin path by following its symlink up to an upper bound.

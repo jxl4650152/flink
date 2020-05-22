@@ -2,7 +2,7 @@ package org.apache.flink.streaming.api.environment;
 
 public class CloudInfo {
 	private String cloudId;
-	CloudInfo(String cloudId){
+	public CloudInfo(String cloudId){
 		this.cloudId = cloudId;
 	}
 

@@ -19,11 +19,13 @@
 package org.apache.flink.runtime.resourcemanager.slotmanager;
 
 import org.apache.flink.annotation.VisibleForTesting;
+import org.apache.flink.runtime.cloudmanager.CloudManagerGateway;
 import org.apache.flink.runtime.cloudmanager.CloudManagerToResourceManagerConnection;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
 import org.apache.flink.runtime.clusterframework.types.SlotID;
 import org.apache.flink.runtime.instance.InstanceID;
+import org.apache.flink.runtime.resourcemanager.CloudManagerRegistration;
 import org.apache.flink.runtime.resourcemanager.ResourceManagerId;
 import org.apache.flink.runtime.resourcemanager.SlotRequest;
 import org.apache.flink.runtime.resourcemanager.exceptions.ResourceManagerException;
@@ -100,10 +102,11 @@ public interface SlotManager extends AutoCloseable {
 	/**
 	 * Registers a new cloud manager at the slot manager.
 	 *
-	 * @param cloudManagerConnection for the new task manager
+	 * @param cloudManagerRegistration for the new task manager
 	 */
-	void registerCloudManager(CloudManagerToResourceManagerConnection cloudManagerConnection);
+	void registerCloudManager(CloudManagerRegistration cloudManagerRegistration);
 
+	void addCloudManagerGateway(String cloudId, CloudManagerGateway gateway);
 	/**
 	 * Unregisters the task manager identified by the given instance id and its associated slots
 	 * from the slot manager.

@@ -102,7 +102,9 @@ public class SlotManagerImpl implements SlotManager {
 
 	private final SlotMatchingStrategy slotMatchingStrategy;
 
-	private final HashMap<String, CloudManagerToResourceManagerConnection> cloudManagerRegistrations;
+	private final HashMap<String, CloudManagerRegistration> cloudManagerRegistrations;
+
+	private final HashMap<String, CloudManagerGateway> cloudManagerGateways;
 
 	/**
 	 * ResourceManager's id.
@@ -162,6 +164,7 @@ public class SlotManagerImpl implements SlotManager {
 		slotRequestTimeoutCheck = null;
 
 		started = false;
+		cloudManagerGateways = new HashMap<>(16);
 	}
 
 	@Override
@@ -403,8 +406,13 @@ public class SlotManagerImpl implements SlotManager {
 	}
 
 	@Override
-	public void registerCloudManager(CloudManagerToResourceManagerConnection cloudManagerConnection) {
+	public void registerCloudManager(CloudManagerRegistration cloudManagerConnection) {
 		cloudManagerRegistrations.put(cloudManagerConnection.getCloudId(), cloudManagerConnection);
+	}
+
+	@Override
+	public void addCloudManagerGateway(String cloudId, CloudManagerGateway gateway) {
+		this.cloudManagerGateways.put(cloudId, gateway);
 	}
 
 	@Override
@@ -844,8 +852,7 @@ public class SlotManagerImpl implements SlotManager {
 
 		TaskExecutorConnection taskExecutorConnection = taskManagerSlot.getTaskManagerConnection();
 		TaskExecutorGateway gateway = taskExecutorConnection.getTaskExecutorGateway();
-		CloudManagerToResourceManagerConnection cloudManagerConnection = cloudManagerRegistrations.get(pendingSlotRequest.getResourceProfile().getCloudId());
-		CloudManagerGateway cGateway = (CloudManagerGateway) cloudManagerConnection.getTargetGateway();
+
 
 		final CompletableFuture<Acknowledge> completableFuture = new CompletableFuture<>();
 		final AllocationID allocationId = pendingSlotRequest.getAllocationId();
@@ -858,6 +865,15 @@ public class SlotManagerImpl implements SlotManager {
 		returnPendingTaskManagerSlotIfAssigned(pendingSlotRequest);
 
 		TaskManagerRegistration taskManagerRegistration = taskManagerRegistrations.get(instanceID);
+		CloudManagerGateway cloudManagerGateway = cloudManagerGateways.get(pendingSlotRequest.getResourceProfile().getCloudId());
+		//check if cloud manager present
+		if (cloudManagerGateway == null) {
+			throw new IllegalStateException("Could not find a registered cloud manager for instance id " +
+				instanceID + '.');
+		}
+
+
+
 
 		if (taskManagerRegistration == null) {
 			throw new IllegalStateException("Could not find a registered task manager for instance id " +

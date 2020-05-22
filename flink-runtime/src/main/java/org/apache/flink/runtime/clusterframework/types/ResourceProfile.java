@@ -226,7 +226,7 @@ public class ResourceProfile implements Serializable {
 	public String getCloudId(){
 		return this.cloudId;
 	}
-
+	public boolean isBorder() { return this.isBorder; }
 	/**
 	 * Get the total memory needed.
 	 *
@@ -436,6 +436,7 @@ public class ResourceProfile implements Serializable {
 		resourceStr = addMemorySizeString(resourceStr, "managedMemory", managedMemory);
 		resourceStr = addMemorySizeString(resourceStr, "networkMemory", networkMemory);
 		resourceStr += (", cloudId=" + cloudId);
+		resourceStr += (", isBorder=" + isBorder);
 		return resourceStr;
 	}
 

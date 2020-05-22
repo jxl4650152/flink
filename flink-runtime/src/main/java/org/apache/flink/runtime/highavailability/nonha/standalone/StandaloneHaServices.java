@@ -116,6 +116,13 @@ public class StandaloneHaServices extends AbstractNonHaServices {
 		}
 	}
 
+	public LeaderElectionService getCloudManagerLeaderElectionService() {
+		synchronized (lock) {
+			checkNotShutdown();
+			return new StandaloneLeaderElectionService();
+		}
+	}
+
 	@Override
 	public LeaderElectionService getDispatcherLeaderElectionService() {
 		synchronized (lock) {

@@ -1,12 +1,20 @@
 package org.apache.flink.runtime.cloudmanager;
 
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
+import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
+import org.apache.flink.runtime.clusterframework.types.SlotID;
 import org.apache.flink.runtime.entrypoint.ClusterInformation;
 import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
 import org.apache.flink.runtime.highavailability.HighAvailabilityServices;
+import org.apache.flink.runtime.highavailability.nonha.standalone.StandaloneHaServices;
 import org.apache.flink.runtime.instance.InstanceID;
 import org.apache.flink.runtime.jobmaster.ResourceManagerAddress;
+import org.apache.flink.runtime.leaderelection.LeaderContender;
+import org.apache.flink.runtime.leaderelection.LeaderElectionService;
+import org.apache.flink.runtime.leaderelection.StandaloneLeaderElectionService;
 import org.apache.flink.runtime.leaderretrieval.LeaderRetrievalListener;
 import org.apache.flink.runtime.leaderretrieval.LeaderRetrievalService;
 import org.apache.flink.runtime.messages.Acknowledge;
@@ -35,7 +43,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-public class CloudManager extends FencedRpcEndpoint<ResourceID> implements CloudManagerGateway {
+public class CloudManager extends FencedRpcEndpoint<CloudManagerId> implements CloudManagerGateway, LeaderContender {
 	public static final String CLOUD_MANAGER_NAME = "cloudmanager";
 	private final FatalErrorHandler fatalErrorHandler;
 	private RpcService rpcService;
@@ -47,6 +55,7 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 	private final Map<ResourceID, CompletableFuture<TaskExecutorGateway>> taskExecutorGatewayFutures;
 
 	private final Map<ResourceID, TaskExecutorGateway> taskExecutors;
+	private final Map<ResourceID, SlotReport> slotReports;
 	private final HighAvailabilityServices haServices;
 	private final LeaderRetrievalService resourceManagerLeaderRetriever;
 	@Nullable
@@ -72,6 +81,7 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 		this.rpcService = rpcService;
 		this.resourceId = rid;
 		this.taskExecutors = new HashMap<>(8);
+		this.slotReports = new HashMap<>(4);
 		this.taskExecutorGatewayFutures = new HashMap<>(8);
 		this.fatalErrorHandler = checkNotNull(fatalErrorHandler);
 		this.haServices = checkNotNull(haServices);
@@ -83,6 +93,8 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 	@Override
 	public void onStart() throws Exception {
 		try {
+			LeaderElectionService les = ((StandaloneHaServices) haServices).getCloudManagerLeaderElectionService();
+			les.start(this);
 			log.info("CloudManager({}) start running.", resourceId);
 			resourceManagerLeaderRetriever.start(new ResourceManagerLeaderListener());
 		} catch (Exception e) {
@@ -109,21 +121,36 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 
 	@Override
 	public CompletableFuture<Acknowledge> cancelTask(ExecutionAttemptID executionAttemptID, Time timeout) {
-		log.info("Receive task cancel from jobManager.");
+		log.info("Receive task(ExecutionID: {}) cancel from jobManager.", executionAttemptID);
 		return CompletableFuture.completedFuture(Acknowledge.get());
 	}
 
 	@Override
 	public CompletableFuture<Acknowledge> sendSlotReport(ResourceID taskManagerResourceId, SlotReport slotReport, Time timeout) {
-		log.info("Receive slot report from TaskManager:{}.", taskManagerResourceId);
+		log.info("Receive slot report{} from TaskManager:{}.", slotReport, taskManagerResourceId);
+		slotReports.put(taskManagerResourceId, slotReport);
 		return CompletableFuture.completedFuture(Acknowledge.get());
 	}
 
 	@Override
 	public CompletableFuture<RegistrationResponse> registerTaskExecutor(TaskExecutorRegistration taskExecutorRegistration, Time timeout) {
-		log.info("Receive slot report from TaskManager:{}.", taskExecutorRegistration.getResourceId());
+		log.info("Receive TaskManager registration on deprecated method:{}.", taskExecutorRegistration.getResourceId());
 		return null;
 	}
+
+	@Override
+	public CompletableFuture<Acknowledge> requestSlot(SlotID slotId, JobID jobId, AllocationID allocationId, ResourceProfile resourceProfile, String targetAddress, ResourceManagerId resourceManagerId, Time timeout) {
+		log.info("Receive slot({}) request(cloudid: {}, border: {}) of job({}) from resourcemanager in jobManager.",
+			slotId,
+			resourceProfile.getCloudId(),
+			resourceProfile.isBorder(),
+			jobId);
+		CompletableFuture<Acknowledge> findResult = findAndRequestSlot(slotId,  jobId, allocationId, resourceProfile, targetAddress, resourceManagerId,  timeout);
+		
+		return findResult;
+	}
+
+
 
 	@Override
 	public CompletableFuture<RegistrationResponse> registerTaskExecutorOnCloudManager(
@@ -182,6 +209,11 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 		startRegistrationTimeout();
 		tryConnectToResourceManager();
 	}
+
+	private CompletableFuture<Acknowledge> findAndRequestSlot(SlotID slotId, JobID jobId, AllocationID allocationId, ResourceProfile resourceProfile, String targetAddress, ResourceManagerId resourceManagerId, Time timeout) {
+		return CompletableFuture.completedFuture(Acknowledge.get());
+	}
+
 	private void closeResourceManagerConnection(Exception cause) {
 		if (establishedResourceManagerConnection != null) {
 			final ResourceID resourceManagerResourceId = establishedResourceManagerConnection.getResourceManagerResourceId();
@@ -287,6 +319,38 @@ public class CloudManager extends FencedRpcEndpoint<ResourceID> implements Cloud
 			return new ResourceManagerAddress(newLeaderAddress, newResourceManagerId);
 		}
 	}
+
+	@Override
+	public void grantLeadership(UUID leaderSessionID) {
+		final CloudManagerId id = CloudManagerId.fromUuid(leaderSessionID);
+		if(getFencingToken() != null) {
+			log.info("Fencing token already set to {}", getFencingToken());
+		}
+		setFencingToken(id);
+	}
+
+	@Override
+	public void revokeLeadership() {
+		runAsyncWithoutFencing(
+			() -> {
+				log.info("ResourceManager {} was revoked leadership. Clearing fencing token.", getAddress());
+
+//				clearStateInternal();
+
+				setFencingToken(null);
+
+//				slotManager.suspend();
+
+//				stopHeartbeatServices();
+
+			});
+	}
+
+	@Override
+	public void handleError(Exception exception) {
+		log.info("Error in leader thread happend.");
+	}
+
 	private final class ResourceManagerLeaderListener implements LeaderRetrievalListener {
 
 		@Override

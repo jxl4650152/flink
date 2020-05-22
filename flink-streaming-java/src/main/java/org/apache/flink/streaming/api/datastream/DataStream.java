@@ -1014,7 +1014,13 @@ public class DataStream<T> {
 	}
 
 	@PublicEvolving
-	public DataStreamSink<T> print(String cloudId) {
+	public DataStreamSink<T> print(CloudInfo info) {
+		PrintSinkFunction<T> printFunction = new PrintSinkFunction<>();
+		return addSink(printFunction, info).name("Print to Std. Out");
+	}
+
+	@PublicEvolving
+	public DataStreamSink<T> print(String iden) {
 		PrintSinkFunction<T> printFunction = new PrintSinkFunction<>();
 		return addSink(printFunction).name("Print to Std. Out");
 	}
@@ -1349,6 +1355,23 @@ public class DataStream<T> {
 		return sink;
 	}
 
+	public DataStreamSink<T> addSink(SinkFunction<T> sinkFunction, CloudInfo info) {
+
+		// read the output type of the input Transform to coax out errors about MissingTypeInfo
+		transformation.getOutputType();
+
+		// configure the type if needed
+		if (sinkFunction instanceof InputTypeConfigurable) {
+			((InputTypeConfigurable) sinkFunction).setInputType(getType(), getExecutionConfig());
+		}
+
+		StreamSink<T> sinkOperator = new StreamSink<>(clean(sinkFunction));
+
+		DataStreamSink<T> sink = new DataStreamSink<>(this, sinkOperator);
+		sink.getTransformation().setCLoudId(info.getCloudId());
+		getExecutionEnvironment().addOperator(sink.getTransformation());
+		return sink;
+	}
 	/**
 	 * Returns the {@link Transformation} that represents the operation that logically creates
 	 * this {@link DataStream}.

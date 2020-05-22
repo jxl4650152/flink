@@ -194,7 +194,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 		this.jobManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
 		this.taskManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
 		this.cloudManagerHeartbeatManager = NoOpHeartbeatManager.getInstance();
-		cloudManagerGateways = null;
+		this.cloudManagerGateways = new HashMap<>(8);
 	}
 
 
@@ -777,6 +777,7 @@ public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
 	private RegistrationResponse registerCloudManagerInternal(
 		CloudManagerGateway cloudManagerGateway,
 		CloudManagerRegistration cloudManagerRegistration) {
+		cloudManagerGateways.put(cloudManagerRegistration.getCloudId(), cloudManagerGateway);
 		ResourceID cloudManagerResourceId = cloudManagerRegistration.getResourceId();
 		CloudManagerRegistration oldRegistration = cloudManagers.remove(cloudManagerResourceId);
 		if (oldRegistration != null) {
