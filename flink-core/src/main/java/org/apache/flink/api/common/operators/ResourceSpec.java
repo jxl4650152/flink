@@ -116,9 +116,23 @@ public final class ResourceSpec implements Serializable {
 		}
 	}
 
-	/**
-	 * Creates a new ResourceSpec with all fields unknown.
-	 */
+	private ResourceSpec(
+		final Resource cpuCores,
+		final MemorySize taskHeapMemory,
+		final MemorySize taskOffHeapMemory,
+		final MemorySize managedMemory,
+		final String cloudId,
+		final boolean isBorder,
+		final Resource... extendedResources
+		) {
+		this(cpuCores, taskHeapMemory, taskOffHeapMemory, managedMemory, extendedResources);
+		this.cloudId = cloudId;
+		this.isBorder = isBorder;
+	}
+
+		/**
+		 * Creates a new ResourceSpec with all fields unknown.
+		 */
 	private ResourceSpec() {
 		this.cpuCores = null;
 		this.taskHeapMemory = null;
@@ -146,7 +160,10 @@ public final class ResourceSpec implements Serializable {
 			this.cpuCores.merge(other.cpuCores),
 			this.taskHeapMemory.add(other.taskHeapMemory),
 			this.taskOffHeapMemory.add(other.taskOffHeapMemory),
-			this.managedMemory.add(other.managedMemory));
+			this.managedMemory.add(other.managedMemory),
+			other.cloudId,
+			other.isBorder
+			);
 		target.extendedResources.putAll(extendedResources);
 		for (Resource resource : other.extendedResources.values()) {
 			target.extendedResources.merge(resource.getName(), resource, (v1, v2) -> v1.merge(v2));
@@ -345,6 +362,8 @@ public final class ResourceSpec implements Serializable {
 		private MemorySize taskOffHeapMemory = MemorySize.ZERO;
 		private MemorySize managedMemory = MemorySize.ZERO;
 		private GPUResource gpuResource;
+		private String cloudId;
+		private boolean isBorder;
 
 		private Builder(CPUResource cpuCores, MemorySize taskHeapMemory) {
 			this.cpuCores = cpuCores;
@@ -360,6 +379,18 @@ public final class ResourceSpec implements Serializable {
 			this.taskHeapMemory = taskHeapMemory;
 			return this;
 		}
+
+		public Builder setCloudId(String id) {
+			this.cloudId = id;
+			return this;
+		}
+
+		public Builder setBorder(boolean taskHeapMemory) {
+			this.isBorder = taskHeapMemory;
+			return this;
+		}
+
+
 
 		public Builder setTaskHeapMemoryMB(int taskHeapMemoryMB) {
 			this.taskHeapMemory = MemorySize.ofMebiBytes(taskHeapMemoryMB);

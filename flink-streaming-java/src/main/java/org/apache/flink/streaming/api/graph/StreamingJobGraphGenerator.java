@@ -21,9 +21,11 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.functions.Function;
 import org.apache.flink.api.common.operators.ResourceSpec;
+import org.apache.flink.api.common.resources.CPUResource;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.IllegalConfigurationException;
+import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.optimizer.plantranslate.JobGraphGenerator;
 import org.apache.flink.runtime.checkpoint.CheckpointRetentionPolicy;
 import org.apache.flink.runtime.checkpoint.MasterTriggerRestoreHook;
@@ -637,7 +639,12 @@ public class StreamingJobGraphGenerator {
 				effectiveSlotSharingGroup = specifiedSlotSharingGroups.computeIfAbsent(
 					slotSharingGroupKey, k -> new SlotSharingGroup());
 			}
-
+			ResourceSpec other = ResourceSpec.newBuilder(0.0, 0)
+				.setCloudId(vertex.getCloudId())
+				.setBorder(vertex.isBorder())
+				.build();
+			ResourceSpec rn =  effectiveSlotSharingGroup.getResourceSpec().merge(other);
+			effectiveSlotSharingGroup.setResourceSpec(rn);
 			vertex.setSlotSharingGroup(effectiveSlotSharingGroup);
 		}
 	}

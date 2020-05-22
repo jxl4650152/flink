@@ -69,6 +69,10 @@ public class SlotSharingGroup implements java.io.Serializable {
 		return resourceSpec;
 	}
 
+	public void setResourceSpec(ResourceSpec r){
+		this.resourceSpec = r;
+	}
+
 	// ------------------------------------------------------------------------
 	//  Utilities
 	// ------------------------------------------------------------------------
