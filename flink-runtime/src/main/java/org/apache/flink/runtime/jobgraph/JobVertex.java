@@ -74,7 +74,7 @@ public class JobVertex implements java.io.Serializable {
 	private int maxParallelism = -1;
 
 	/** The minimum resource of the vertex. */
-	private ResourceSpec minResources = ResourceSpec.DEFAULT;
+	private ResourceSpec minResources = ResourceSpec.JC_DEFAULT;
 
 	/** The preferred resource of the vertex. */
 	private ResourceSpec preferredResources = ResourceSpec.DEFAULT;

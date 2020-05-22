@@ -112,6 +112,8 @@ public abstract class SlotProviderStrategy {
 
 		@Override
 		public CompletableFuture<LogicalSlot> allocateSlot(SlotRequestId slotRequestId, ScheduledUnit scheduledUnit, SlotProfile slotProfile) {
+			System.out.println("Normal slotprovider allocate: " + slotProfile.getPhysicalSlotResourceProfile() + "task: " +
+				slotProfile.getTaskResourceProfile());
 			return slotProvider.allocateSlot(slotRequestId, scheduledUnit, slotProfile, allocationTimeout);
 		}
 	}

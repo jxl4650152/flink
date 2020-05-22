@@ -33,6 +33,7 @@ import org.apache.flink.runtime.rpc.akka.AkkaRpcServiceUtils;
 import org.apache.flink.runtime.taskexecutor.*;
 import org.apache.flink.runtime.taskexecutor.exceptions.RegistrationTimeoutException;
 import org.apache.flink.util.FlinkException;
+import org.apache.hadoop.mapreduce.Job;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -114,8 +115,8 @@ public class CloudManager extends FencedRpcEndpoint<CloudManagerId> implements C
 	}
 
 	@Override
-	public CompletableFuture<Acknowledge> submitTask(String tdd, int jobMasterId, String timeout) {
-		log.info("Receive submit task({}) of job({})from.", tdd, tdd);
+	public CompletableFuture<Acknowledge> submitTask(JobID jobID, String taskName, int subIndex, String target) {
+		log.info("Receive submit task {}-{} of job({}), target address: {}.", taskName, subIndex, jobID, target);
 		return CompletableFuture.completedFuture(Acknowledge.get());
 	}
 

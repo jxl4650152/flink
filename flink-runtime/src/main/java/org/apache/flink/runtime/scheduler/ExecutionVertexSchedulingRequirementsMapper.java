@@ -66,8 +66,8 @@ public final class ExecutionVertexSchedulingRequirementsMapper {
 			? executionVertex.getResourceProfile()
 			: ResourceProfile.fromResourceSpec(slotSharingGroup.getResourceSpec(), MemorySize.ZERO);
 
-		System.out.print("PhysicalSlotResourceProfile of " + executionVertex.getTaskNameWithSubtaskIndex() +
-			", sharing=" + slotSharingGroup +
+		System.out.print( "PhysicalSlotResourceProfile of " + executionVertex.getTaskNameWithSubtaskIndex() +
+			", sharing=" + (slotSharingGroup == null) +
 			", vertexProfile=" + executionVertex.getResourceProfile() +
 			", groupProfile=" + ResourceProfile.fromResourceSpec(slotSharingGroup.getResourceSpec(), MemorySize.ZERO) +
 			", resultProfile=" + rp

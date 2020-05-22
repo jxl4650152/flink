@@ -292,7 +292,9 @@ public class ResourceProfile implements Serializable {
 			taskHeapMemory.compareTo(required.taskHeapMemory) >= 0 &&
 			taskOffHeapMemory.compareTo(required.taskOffHeapMemory) >= 0 &&
 			managedMemory.compareTo(required.managedMemory) >= 0 &&
-			networkMemory.compareTo(required.networkMemory) >= 0) {
+			networkMemory.compareTo(required.networkMemory) >= 0 &&
+			cloudId.equals(required.cloudId) &&
+			(!required.isBorder || isBorder) ) {
 
 			for (Map.Entry<String, Resource> resource : required.extendedResources.entrySet()) {
 				if (!extendedResources.containsKey(resource.getKey()) ||

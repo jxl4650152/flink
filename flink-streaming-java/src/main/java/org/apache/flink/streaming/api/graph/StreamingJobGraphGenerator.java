@@ -645,6 +645,7 @@ public class StreamingJobGraphGenerator {
 				.build();
 			ResourceSpec rn =  effectiveSlotSharingGroup.getResourceSpec().merge(other);
 			effectiveSlotSharingGroup.setResourceSpec(rn);
+			System.out.println("Set ssg " + vertex + ": " + effectiveSlotSharingGroup.getResourceSpec());
 			vertex.setSlotSharingGroup(effectiveSlotSharingGroup);
 		}
 	}

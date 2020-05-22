@@ -528,7 +528,12 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 						tdd.getJobId() + " vs. " + jobInformation.getJobId() + ")");
 			}
 
-			cloudManagerConnection.getTargetGateway().submitTask(jobInformation.getJobName(),tdd.getSubtaskIndex(),taskInformation.getTaskName());
+			cloudManagerConnection.getTargetGateway().submitTask(
+				jobInformation.getJobId(),
+				taskInformation.getTaskName(),
+				tdd.getSubtaskIndex(),
+				getRpcService().getAddress()
+			);
 
 			TaskMetricGroup taskMetricGroup = taskManagerMetricGroup.addTaskForJob(
 				jobInformation.getJobId(),

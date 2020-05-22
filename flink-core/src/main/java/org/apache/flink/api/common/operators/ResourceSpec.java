@@ -65,6 +65,8 @@ public final class ResourceSpec implements Serializable {
 	 */
 	public static final ResourceSpec DEFAULT = UNKNOWN;
 
+	public static final ResourceSpec JC_DEFAULT = ResourceSpec.newBuilder(0, 1).build();
+
 	/**
 	 * A ResourceSpec that indicates zero amount of resources.
 	 */
@@ -138,7 +140,7 @@ public final class ResourceSpec implements Serializable {
 		this.taskHeapMemory = null;
 		this.taskOffHeapMemory = null;
 		this.managedMemory = null;
-		this.cloudId = "cloud1";
+		this.cloudId = null;
 		this.isBorder = false;
 	}
 
@@ -161,8 +163,8 @@ public final class ResourceSpec implements Serializable {
 			this.taskHeapMemory.add(other.taskHeapMemory),
 			this.taskOffHeapMemory.add(other.taskOffHeapMemory),
 			this.managedMemory.add(other.managedMemory),
-			other.cloudId,
-			other.isBorder
+			other.cloudId == null ? this.cloudId : other.cloudId,
+			other.cloudId == null ? this.isBorder : other.isBorder
 			);
 		target.extendedResources.putAll(extendedResources);
 		for (Resource resource : other.extendedResources.values()) {
@@ -362,8 +364,8 @@ public final class ResourceSpec implements Serializable {
 		private MemorySize taskOffHeapMemory = MemorySize.ZERO;
 		private MemorySize managedMemory = MemorySize.ZERO;
 		private GPUResource gpuResource;
-		private String cloudId;
-		private boolean isBorder;
+		private String cloudId = null;
+		private boolean isBorder = false;
 
 		private Builder(CPUResource cpuCores, MemorySize taskHeapMemory) {
 			this.cpuCores = cpuCores;

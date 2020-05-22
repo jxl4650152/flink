@@ -21,9 +21,10 @@ import java.util.concurrent.CompletableFuture;
 public interface CloudManagerGateway extends FencedRpcGateway<CloudManagerId> {
 
 	CompletableFuture<Acknowledge> submitTask(
-		String tdd,
+		JobID id,
+		String tname,
 		int jobMasterId,
-		String timeout);
+		String targetAddress);
 
 	CompletableFuture<Acknowledge> cancelTask(
 		ExecutionAttemptID executionAttemptID,

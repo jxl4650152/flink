@@ -543,8 +543,13 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			final CompletableFuture<LogicalSlot> logicalSlotFuture =
 				preferredLocationsFuture.thenCompose(
-					(Collection<TaskManagerLocation> preferredLocations) ->
-						slotProviderStrategy.allocateSlot(
+					(Collection<TaskManagerLocation> preferredLocations) -> {
+						LOG.info("Allocate request vertex={}, Physical={}, prefer={}",
+							vertex.getResourceProfile(),
+							getPhysicalSlotResourceProfile(vertex),
+							preferredLocations
+						);
+						return slotProviderStrategy.allocateSlot(
 							slotRequestId,
 							toSchedule,
 							SlotProfile.priorAllocation(
@@ -552,7 +557,10 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 								getPhysicalSlotResourceProfile(vertex),
 								preferredLocations,
 								previousAllocationIDs,
-								allPreviousExecutionGraphAllocationIds)));
+								allPreviousExecutionGraphAllocationIds
+							));
+					}
+				);
 
 			// register call back to cancel slot request in case that the execution gets canceled
 			releaseFuture.whenComplete(
