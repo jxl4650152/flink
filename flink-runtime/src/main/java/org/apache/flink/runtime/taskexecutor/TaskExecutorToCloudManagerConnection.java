@@ -117,7 +117,6 @@ public class TaskExecutorToCloudManagerConnection
 		@Override
 		protected CompletableFuture<RegistrationResponse> invokeRegistration(CloudManagerGateway gateway, CloudManagerId fencingToken, long timeoutMillis) throws Exception {
 			Time timeout = Time.milliseconds(timeoutMillis);
-			logger.info("Send registerTaskExecutorOnCloudManager RPC call");
 			return gateway.registerTaskExecutorOnCloudManager(
 				taskExecutorRegistration,
 				timeout);
