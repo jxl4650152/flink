@@ -337,14 +337,14 @@ public class StreamGraphGenerator {
 		Transformation<T> input = partition.getInput();
 		List<Integer> resultIds = new ArrayList<>();
 		String inputId = input.getCLoudId();
-		if (!partition.getCLoudId().equals("")){
-			if(!inputId.equals(partition.getCLoudId())){
-				input.setBorder(true);
-				partition.setBorder(true);
-			}
-		}else{
+//		if (!partition.getCLoudId().equals("")){
+//			if(!inputId.equals(partition.getCLoudId())){
+//				input.setBorder(true);
+//				partition.setBorder(true);
+//			}
+//		}else{
 			partition.setCLoudId(inputId);
-		}
+//		}
 		Collection<Integer> transformedIds = transform(input);
 		for (Integer transformedId: transformedIds) {
 			int virtualId = Transformation.getNewNodeId();
@@ -590,7 +590,7 @@ public class StreamGraphGenerator {
 				source.getOutputType(),
 				"Source: " + source.getName(),
 				source.getCLoudId(),
-				source.isBorder());
+				true);
 		if (source.getOperatorFactory() instanceof InputFormatOperatorFactory) {
 			streamGraph.setInputFormat(source.getId(),
 					((InputFormatOperatorFactory<T>) source.getOperatorFactory()).getInputFormat());
@@ -608,8 +608,11 @@ public class StreamGraphGenerator {
 	private <T> Collection<Integer> transformSink(SinkTransformation<T> sink) {
 
 		Collection<Integer> inputIds = transform(sink.getInput());
-
-		String inputCloudId = sink.getInput().getCLoudId();
+		Transformation<T> inputTrans = sink.getInput();
+		while(inputTrans instanceof PartitionTransformation){
+			inputTrans = ((PartitionTransformation<T>) inputTrans).getInput();
+		}
+		String inputCloudId = inputTrans.getCLoudId();
 		if(inputCloudId.equals("")){
 			LOG.error("Input({}) of transformation({}) doesn't have cloudId after being transformed.",
 				sink.getInput().getName(),
@@ -617,8 +620,8 @@ public class StreamGraphGenerator {
 		} else {
 			if (sink.getCLoudId().equals("")){
 				sink.setCLoudId(inputCloudId);
-			}else if (sink.getCLoudId().equals(inputCloudId)){
-				sink.getInput().setBorder(true);
+			}else if (!sink.getCLoudId().equals(inputCloudId)){
+				streamGraph.getStreamNode(inputTrans.getId()).setBorder(true);
 				sink.setBorder(true);
 			}
 		}
@@ -668,16 +671,20 @@ public class StreamGraphGenerator {
 	private <IN, OUT> Collection<Integer> transformOneInputTransform(OneInputTransformation<IN, OUT> transform) {
 
 		Collection<Integer> inputIds = transform(transform.getInput());
-		String inputCloudId = transform.getInput().getCLoudId();
+		Transformation<IN> inputTrans = transform.getInput();
+		while(inputTrans instanceof PartitionTransformation){
+			inputTrans = ((PartitionTransformation<IN>) inputTrans).getInput();
+		}
+		String inputCloudId = inputTrans.getCLoudId();
 		if(inputCloudId.equals("")){
 			LOG.error("Input({}) of transformation({}) doesn't have cloudId after being transformed.",
-				transform.getInput().getName(),
+				inputTrans.getName(),
 				transform.getName());
 		} else {
 			if (transform.getCLoudId().equals("")){
 				transform.setCLoudId(inputCloudId);
-			}else if (transform.getCLoudId().equals(inputCloudId)){
-				transform.getInput().setBorder(true);
+			}else if (!transform.getCLoudId().equals(inputCloudId)){
+				streamGraph.getStreamNode(inputTrans.getId()).setBorder(true);
 				transform.setBorder(true);
 			}
 		}
