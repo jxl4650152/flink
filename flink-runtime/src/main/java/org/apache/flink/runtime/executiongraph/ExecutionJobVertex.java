@@ -276,7 +276,8 @@ public class ExecutionJobVertex implements AccessExecutionJobVertex, Archiveable
 		ResourceProfile res = ResourceProfile.fromResourceSpec(jobVertex.getMinResources(), MemorySize.ZERO);
 		res.setBorder(jobVertex.isBorder());
 		res.setCloudId(jobVertex.getCloudId());
-		System.out.println("       Create resource profile for Vertex: " + res);
+		System.out.println("Create resource profile for Vertex: " + res +
+			"jobvertex minResource: " + jobVertex.getMinResources());
 		return res;
 	}
 
