@@ -541,14 +541,14 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			final SlotRequestId slotRequestId = new SlotRequestId();
 
+			LOG.info("Allocate request vertex={}, Physical={}",
+				vertex.getResourceProfile(),
+				getPhysicalSlotResourceProfile(vertex)
+			);
 			final CompletableFuture<LogicalSlot> logicalSlotFuture =
 				preferredLocationsFuture.thenCompose(
 					(Collection<TaskManagerLocation> preferredLocations) -> {
-						LOG.info("Allocate request vertex={}, Physical={}, prefer={}",
-							vertex.getResourceProfile(),
-							getPhysicalSlotResourceProfile(vertex),
-							preferredLocations
-						);
+
 						return slotProviderStrategy.allocateSlot(
 							slotRequestId,
 							toSchedule,

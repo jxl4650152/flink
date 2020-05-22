@@ -130,13 +130,13 @@ public abstract class Transformation<T> {
 	 *  The minimum resources for this stream transformation. It defines the lower limit for
 	 *  dynamic resources resize in future plan.
 	 */
-	private ResourceSpec minResources = ResourceSpec.DEFAULT;
+	private ResourceSpec minResources = ResourceSpec.JC_DEFAULT;
 
 	/**
 	 *  The preferred resources for this stream transformation. It defines the upper limit for
 	 *  dynamic resource resize in future plan.
 	 */
-	private ResourceSpec preferredResources = ResourceSpec.DEFAULT;
+	private ResourceSpec preferredResources = ResourceSpec.JC_DEFAULT;
 
 	/**
 	 * This weight indicates how much this transformation relies on managed memory, so that
