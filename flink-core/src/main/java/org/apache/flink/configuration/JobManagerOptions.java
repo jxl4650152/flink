@@ -175,7 +175,7 @@ public class JobManagerOptions {
 	@Documentation.Section(Documentation.Sections.EXPERT_SCHEDULING)
 	public static final ConfigOption<Long> SLOT_REQUEST_TIMEOUT =
 		key("slot.request.timeout")
-		.defaultValue(5L * 60L * 1000L)
+		.defaultValue(1L * 60L * 1000L)
 		.withDescription("The timeout in milliseconds for requesting a slot from Slot Pool.");
 
 	/**
