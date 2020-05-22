@@ -1573,8 +1573,10 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 			try {
 				LOG.info("Notify state change");
 				vertex.notifyStateTransition(this, targetState, error);
+				LOG.info("Notify state change success");
 			}
 			catch (Throwable t) {
+				LOG.info("Notify state change error");
 				LOG.error("Error while notifying execution graph of execution state transition.", t);
 			}
 			return true;
