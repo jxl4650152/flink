@@ -80,7 +80,7 @@ under the License.
 									<include>com.google.guava:guava</include>
 									<include>com.twitter:hbc-core</include>
 									<include>com.twitter:joauth</include>
-									<include>org.apache.httpcomponents:httpclient</include>
+									<include>org.apache.httpcomponents:httpclient:4.2.6</include>
 									<include>org.apache.httpcomponents:httpcore</include>
 								</includes>
 							</artifactSet>
