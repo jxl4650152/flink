@@ -163,6 +163,11 @@ public class ResourceProfile implements Serializable {
 		this.cloudId = null;
 	}
 
+	public ResourceProfile(Resource cpuCores, MemorySize taskHeapMemory, MemorySize taskOffHeapMemory, MemorySize managedMemory, MemorySize networkMemory, Map<String, Resource> extendedResources, String cloudId, boolean isBorder) {
+		this(cpuCores, taskHeapMemory, taskOffHeapMemory, managedMemory, networkMemory, extendedResources, cloudId);
+		this.isBorder = isBorder;
+	}
+
 	// ------------------------------------------------------------------------
 
 	/**
@@ -334,7 +339,8 @@ public class ResourceProfile implements Serializable {
 				Objects.equals(managedMemory, that.managedMemory) &&
 				Objects.equals(networkMemory, that.networkMemory) &&
 				Objects.equals(extendedResources, that.extendedResources) &&
-				cloudId.equals(that.cloudId);
+				cloudId.equals(that.cloudId) &&
+				isBorder == that.isBorder;
 		}
 		return false;
 	}
@@ -601,7 +607,8 @@ public class ResourceProfile implements Serializable {
 				managedMemory,
 				networkMemory,
 				extendedResources,
-				cloudId);
+				cloudId,
+				isBorder);
 		}
 	}
 }
