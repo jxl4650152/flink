@@ -293,7 +293,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 
 		final Map<ExecutionVertexID, ExecutionVertexVersion> requiredVersionByVertex =
 			executionVertexVersioner.recordVertexModifications(verticesToDeploy);
-
+		System.out.println("DefaultScheduler: transitionToScheduled");
 		transitionToScheduled(verticesToDeploy);
 
 		final List<SlotExecutionVertexAssignment> slotExecutionVertexAssignments =
@@ -328,7 +328,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 	}
 
 	private List<SlotExecutionVertexAssignment> allocateSlots(final List<ExecutionVertexDeploymentOption> executionVertexDeploymentOptions) {
-		log.debug("AllocateSlots");
+		System.out.println("AllocateSlots");
 		return executionSlotAllocator.allocateSlotsFor(executionVertexDeploymentOptions
 			.stream()
 			.map(ExecutionVertexDeploymentOption::getExecutionVertexId)
