@@ -108,7 +108,7 @@ public final class ResourceSpec implements Serializable {
 		this.taskHeapMemory = checkNotNull(taskHeapMemory);
 		this.taskOffHeapMemory = checkNotNull(taskOffHeapMemory);
 		this.managedMemory = checkNotNull(managedMemory);
-		this.cloudId = "cloud1";
+		this.cloudId = "";
 		this.isBorder = false;
 
 		for (Resource resource : extendedResources) {
@@ -163,7 +163,7 @@ public final class ResourceSpec implements Serializable {
 			this.taskHeapMemory.add(other.taskHeapMemory),
 			this.taskOffHeapMemory.add(other.taskOffHeapMemory),
 			this.managedMemory.add(other.managedMemory),
-			other.cloudId == null ? this.cloudId : other.cloudId,
+			other.cloudId == null  ? this.cloudId : other.cloudId,
 			other.cloudId == null ? this.isBorder : other.isBorder
 			);
 		target.extendedResources.putAll(extendedResources);
