@@ -90,6 +90,7 @@ public class TaskExecutorResourceUtils {
 	}
 
 	private static void checkConfigOptionIsSet(Configuration config, ConfigOption<?> option) {
+		LOG.info("Check: option: {}, value: {}", option, config.get(option));
 		if (!config.contains(option) && !option.hasDefaultValue()) {
 			throw new IllegalConfigurationException("The required configuration option %s is not set", option);
 		}
