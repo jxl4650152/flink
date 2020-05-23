@@ -312,6 +312,43 @@ public class ResourceProfile implements Serializable {
 		return false;
 	}
 
+	public boolean isResourceMatching(final ResourceProfile required) {
+		checkNotNull(required, "Cannot check matching with null resources");
+
+		if (this.equals(ANY)) {
+			return true;
+		}
+
+		if (this.equals(required)) {
+			return true;
+		}
+
+		if (this.equals(UNKNOWN)) {
+			return false;
+		}
+
+		if (required.equals(UNKNOWN)) {
+			return true;
+		}
+
+		if (cpuCores.getValue().compareTo(required.cpuCores.getValue()) >= 0 &&
+			taskHeapMemory.compareTo(required.taskHeapMemory) >= 0 &&
+			taskOffHeapMemory.compareTo(required.taskOffHeapMemory) >= 0 &&
+			managedMemory.compareTo(required.managedMemory) >= 0 &&
+			networkMemory.compareTo(required.networkMemory) >= 0
+		) {
+
+			for (Map.Entry<String, Resource> resource : required.extendedResources.entrySet()) {
+				if (!extendedResources.containsKey(resource.getKey()) ||
+					extendedResources.get(resource.getKey()).getValue().compareTo(resource.getValue().getValue()) < 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 	// ------------------------------------------------------------------------
 
 	@Override
@@ -377,7 +414,8 @@ public class ResourceProfile implements Serializable {
 			managedMemory.add(other.managedMemory),
 			networkMemory.add(other.networkMemory),
 			resultExtendedResource,
-			this.cloudId);
+			this.cloudId,
+			this.isBorder);
 	}
 
 	/**
@@ -397,7 +435,7 @@ public class ResourceProfile implements Serializable {
 			return UNKNOWN;
 		}
 
-		checkArgument(isMatching(other), "Try to subtract an unmatched resource profile from this one.");
+		checkArgument(isResourceMatching(other), "Try to subtract an unmatched resource profile from this one.");
 
 		Map<String, Resource> resultExtendedResource = new HashMap<>(extendedResources);
 
@@ -415,7 +453,8 @@ public class ResourceProfile implements Serializable {
 			managedMemory.subtract(other.managedMemory),
 			networkMemory.subtract(other.networkMemory),
 			resultExtendedResource,
-			this.cloudId
+			this.cloudId,
+			this.isBorder
 		);
 	}
 
