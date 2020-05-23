@@ -521,7 +521,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 		// this method only works if the execution is in the state 'CREATED'
 		if (transitionState(CREATED, SCHEDULED)) {
-			LOG.info("Transition success");
+			LOG.debug("Transition success");
 			final SlotSharingGroupId slotSharingGroupId = sharingGroup != null ? sharingGroup.getSlotSharingGroupId() : null;
 
 			ScheduledUnit toSchedule = locationConstraint == null ?
@@ -541,7 +541,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			final SlotRequestId slotRequestId = new SlotRequestId();
 
-			LOG.info("Allocate request vertex={}, Physical={}",
+			LOG.debug("Allocate request vertex={}, Physical={}",
 				vertex.getResourceProfile(),
 				getPhysicalSlotResourceProfile(vertex)
 			);
