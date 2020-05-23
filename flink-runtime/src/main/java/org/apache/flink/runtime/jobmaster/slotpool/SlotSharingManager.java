@@ -433,10 +433,10 @@ public class SlotSharingManager {
 					throw new CompletionException(throwable);
 				}
 
-				if (parent == null) {
-					// sanity check
-					releaseSlotIfOversubscribing(slotContext);
-				}
+//				if (parent == null) {
+//					// sanity check
+//					releaseSlotIfOversubscribing(slotContext);
+//				}
 
 				return slotContext;
 			});
