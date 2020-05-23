@@ -49,7 +49,9 @@ public class SlotSharingGroup implements java.io.Serializable {
 
 	public void addVertexToGroup(final JobVertexID id, final ResourceSpec resource) {
 		ids.add(checkNotNull(id));
-		resourceSpec = resourceSpec.merge(checkNotNull(resource));
+		ResourceSpec result = resourceSpec.merge(checkNotNull(resource));
+		System.out.println(String.format("this: %s\n  +  \nother: %s\n  11  \n result: %s", resourceSpec, resource, result));
+		resourceSpec = result;
 	}
 
 	public void removeVertexFromGroup(final JobVertexID id, final ResourceSpec resource) {
