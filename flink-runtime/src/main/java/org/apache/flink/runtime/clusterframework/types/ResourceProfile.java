@@ -488,6 +488,8 @@ public class ResourceProfile implements Serializable {
 			.setManagedMemory(resourceSpec.getManagedMemory())
 			.setNetworkMemory(networkMemory)
 			.addExtendedResources(resourceSpec.getExtendedResources())
+			.setCloudId(resourceSpec.getCloudId())
+			.setBorder(resourceSpec.isBorder())
 			.build();
 	}
 
