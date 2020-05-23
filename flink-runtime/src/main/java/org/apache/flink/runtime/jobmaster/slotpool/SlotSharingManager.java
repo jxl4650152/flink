@@ -646,7 +646,7 @@ public class SlotSharingManager {
 
 		private void releaseSlotIfOversubscribing(SlotContext slotContext) {
 			final ResourceProfile slotResources = slotContext.getResourceProfile();
-
+			LOG.info("resource: {}, reserved: {}, slotContext: {}", slotResources, getReservedResources(), slotContext);
 			if (!slotResources.isMatching(getReservedResources())) {
 				release(
 					new IllegalStateException(
