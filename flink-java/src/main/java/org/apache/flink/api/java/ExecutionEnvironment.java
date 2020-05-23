@@ -423,6 +423,7 @@ public class ExecutionEnvironment {
 		return new DataSource<>(this, new TextInputFormat(new Path(filePath)), BasicTypeInfo.STRING_TYPE_INFO, Utils.getCallLocationName());
 	}
 
+
 	/**
 	 * Creates a {@link DataSet} that represents the Strings produced by reading the given file line wise.
 	 * The {@link java.nio.charset.Charset} with the given name will be used to read the files.

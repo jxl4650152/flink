@@ -1063,6 +1063,10 @@ public class StreamExecutionEnvironment {
 		return readTextFile(filePath, "UTF-8");
 	}
 
+	public DataStreamSource<String> readTextFile(String filePath, CloudInfo info) {
+		return readTextFile(filePath, "UTF-8", info);
+	}
+
 	/**
 	 * Reads the given file line-by-line and creates a data stream that contains a string with the
 	 * contents of each such line. The {@link java.nio.charset.Charset} with the given name will be
@@ -1089,6 +1093,17 @@ public class StreamExecutionEnvironment {
 		format.setCharsetName(charsetName);
 
 		return readFile(format, filePath, FileProcessingMode.PROCESS_ONCE, -1, typeInfo);
+	}
+
+	public DataStreamSource<String> readTextFile(String filePath, String charsetName, CloudInfo info) {
+		Preconditions.checkArgument(!StringUtils.isNullOrWhitespaceOnly(filePath), "The file path must not be null or blank.");
+
+		TextInputFormat format = new TextInputFormat(new Path(filePath));
+		format.setFilesFilter(FilePathFilter.createDefaultFilter());
+		TypeInformation<String> typeInfo = BasicTypeInfo.STRING_TYPE_INFO;
+		format.setCharsetName(charsetName);
+
+		return readFile(format, filePath, FileProcessingMode.PROCESS_ONCE, -1, typeInfo, info);
 	}
 
 	/**
@@ -1282,6 +1297,21 @@ public class StreamExecutionEnvironment {
 
 		inputFormat.setFilePath(filePath);
 		return createFileInput(inputFormat, typeInformation, "Custom File Source", watchType, interval);
+	}
+
+	@PublicEvolving
+	public <OUT> DataStreamSource<OUT> readFile(FileInputFormat<OUT> inputFormat,
+												String filePath,
+												FileProcessingMode watchType,
+												long interval,
+												TypeInformation<OUT> typeInformation,
+												CloudInfo info) {
+
+		Preconditions.checkNotNull(inputFormat, "InputFormat must not be null.");
+		Preconditions.checkArgument(!StringUtils.isNullOrWhitespaceOnly(filePath), "The file path must not be null or blank.");
+
+		inputFormat.setFilePath(filePath);
+		return createFileInput(inputFormat, typeInformation, "Custom File Source", watchType, interval, info);
 	}
 
 	/**
@@ -1499,6 +1529,35 @@ public class StreamExecutionEnvironment {
 		return new DataStreamSource<>(source);
 	}
 
+	private <OUT> DataStreamSource<OUT> createFileInput(FileInputFormat<OUT> inputFormat,
+														TypeInformation<OUT> typeInfo,
+														String sourceName,
+														FileProcessingMode monitoringMode,
+														long interval,
+														CloudInfo info) {
+
+		Preconditions.checkNotNull(inputFormat, "Unspecified file input format.");
+		Preconditions.checkNotNull(typeInfo, "Unspecified output type information.");
+		Preconditions.checkNotNull(sourceName, "Unspecified name for the source.");
+		Preconditions.checkNotNull(monitoringMode, "Unspecified monitoring mode.");
+
+		Preconditions.checkArgument(monitoringMode.equals(FileProcessingMode.PROCESS_ONCE) ||
+				interval >= ContinuousFileMonitoringFunction.MIN_MONITORING_INTERVAL,
+			"The path monitoring interval cannot be less than " +
+				ContinuousFileMonitoringFunction.MIN_MONITORING_INTERVAL + " ms.");
+
+		ContinuousFileMonitoringFunction<OUT> monitoringFunction =
+			new ContinuousFileMonitoringFunction<>(inputFormat, monitoringMode, getParallelism(), interval);
+
+		ContinuousFileReaderOperator<OUT> reader =
+			new ContinuousFileReaderOperator<>(inputFormat);
+
+		SingleOutputStreamOperator<OUT> source = addSource(monitoringFunction, sourceName, null, info.getCloudId())
+			.transform("Split Reader: " + sourceName, typeInfo, reader);
+
+		return new DataStreamSource<>(source);
+	}
+
 	/**
 	 * Adds a Data Source to the streaming topology.
 	 *
@@ -1539,6 +1598,8 @@ public class StreamExecutionEnvironment {
 	public <OUT> DataStreamSource<OUT> addSource(SourceFunction<OUT> function, String sourceName) {
 		return addSource(function, sourceName, null);
 	}
+
+
 
 	/**
 	 * Ads a data source with a custom type information thus opening a
